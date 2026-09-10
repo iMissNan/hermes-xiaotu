@@ -1,0 +1,37 @@
+# ==========================================
+# Obsidian 本地知识库防膨胀与隐私排除规则
+# ==========================================
+
+# 1. 临时与工作区缓存
+.obsidian/workspace*
+.obsidian/cache/
+.obsidian/indexed-internals/
+_trash/
+
+# 2. 系统废弃文件
+.DS_Store
+Thumbs.db
+*.tmp
+*.temp
+*~
+
+# 3. 超大二进制媒体防膨胀（超过 10MB 的音视频/安装包严禁入 Git 历史）
+*.mp4
+*.mkv
+*.avi
+*.mov
+*.iso
+*.zip
+*.tar.gz
+*.7z
+
+# 4. 允许轻量格式（图片与文档受控入库）
+!*.md
+!*.canvas
+!*.base
+!_attachments/*.png
+!_attachments/*.jpg
+!_attachments/*.jpeg
+!_attachments/*.webp
+!_attachments/*.svg
+!_attachments/*.pdf
