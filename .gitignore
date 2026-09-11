@@ -2,7 +2,7 @@
 # Obsidian 本地知识库防膨胀与隐私排除规则
 # ==========================================
 
-# 1. 临时与工作区缓存
+# 1. 临时与工作区缓存（严格排除，避免无意义的频繁变动）
 .obsidian/workspace*
 .obsidian/cache/
 .obsidian/indexed-internals/
@@ -25,10 +25,13 @@ Thumbs.db
 *.tar.gz
 *.7z
 
-# 4. 允许轻量格式（图片与文档受控入库）
+# 4. 允许轻量格式与核心配置受控入库
 !*.md
 !*.canvas
 !*.base
+!.obsidian/app.json
+!.obsidian/core-plugins.json
+!.obsidian/appearance.json
 !_attachments/*.png
 !_attachments/*.jpg
 !_attachments/*.jpeg
