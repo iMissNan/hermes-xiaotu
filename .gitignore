@@ -6,6 +6,7 @@
 .obsidian/workspace*
 .obsidian/cache/
 .obsidian/indexed-internals/
+.obsidian/graph.json
 _trash/
 
 # 2. 系统废弃文件
