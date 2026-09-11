@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 项目讨论
+    url: https://github.com/你的用户名/仓库名/discussions
+    about: 提问、讨论功能或使用问题请走 Discussions
