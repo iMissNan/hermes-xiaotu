@@ -7,7 +7,7 @@ _RANGES='192\.168\.[0-9]+\.[0-9]+|10\.[0-9]+\.[0-9]+\.[0-9]+|172\.(1[6-9]|2[0-9]
 _GEN='[a-z0-9-]+\.tail[0-9a-f]{4,}\.ts\.net|/home/[a-z]+/'
 ESCAPED=$(echo "$_SPEC" | tr ' ' '\n' | sed 's/[.[*+?(^)$]\\/&/g' | paste -sd '|')
 BLOCK="$ESCAPED|$_RANGES|$_GEN"
-hits=$(git grep -n -I -E "$BLOCK" HEAD -- 2>/dev/null | grep -v 'hooks/pre-push')
+hits=$(git grep -n -I -E "$BLOCK" HEAD -- 2>/dev/null | grep -v 'hooks/pre-push' | grep -v '172\.17\.0\.1')  # 172.17.0.1=Docker 默认网桥，通用常量放行
 if [ -n "$hits" ]; then
   echo "✘ 检出敏感真值，禁止推送（请改用占位符，真实值存本地 _local/）："
   echo "$hits" | head -10
