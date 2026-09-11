@@ -15,12 +15,12 @@ aliases: [AO, agency-orchestrator, AO流水线]
 ---
 
 ## 1. 核心访问入口与定位
-- **安装位置**：`/home/linxuan/.npm-global/lib/node_modules/agency-orchestrator/`（ao 0.19.2）
+- **安装位置**：`~/.npm-global/lib/node_modules/agency-orchestrator/`（ao 0.19.2）
 - **运行大盘**：`http://<你的域名>:20132/`（看产出、步骤档案、耗时）
 - **举手汇报面板**：`http://<你的域名>:20133/`（每步专家干完自动汇报，只读独立库）
-- **启动纪律**：必须用 `/home/linxuan/.local/bin/ao-run-safe` 带 `--session-id` 启动，**禁止裸跑 `ao run`**
-- **工作流图纸**：`/home/linxuan/.hermes/workspace/workflows/`（YAML，写明角色/验收标准/模型）
-- **运行产物**：`/home/linxuan/.hermes/workspace/ao-output/`（目录名=完成时刻 UTC 时间，不是启动时间）
+- **启动纪律**：必须用 `~/.local/bin/ao-run-safe` 带 `--session-id` 启动，**禁止裸跑 `ao run`**
+- **工作流图纸**：`~/.hermes/workspace/workflows/`（YAML，写明角色/验收标准/模型）
+- **运行产物**：`~/.hermes/workspace/ao-output/`（目录名=完成时刻 UTC 时间，不是启动时间）
 
 ## 2. 模型分工与验收防线
 - **实施**用 yangmao（耐磨免费）；**验收员/红队/审计**用 Antigravity（强，YAML 顶层 `verify_llm` 独立配置）
@@ -35,9 +35,9 @@ aliases: [AO, agency-orchestrator, AO流水线]
 ## 4. 关键文件与维护
 | 文件 | 作用 |
 |---|---|
-| `/home/linxuan/.local/bin/ao-run-safe` | 唯一启动入口（V4.1：时长预估横幅 + 看门狗登记） |
-| `/home/linxuan/.local/bin/hermes-handover` | 举手汇报写入器（v3 sidecar 版） |
-| `/home/linxuan/.local/bin/handover-board.py` | :20133 面板（systemd 自愈 `ao-handover-board.service`） |
+| `~/.local/bin/ao-run-safe` | 唯一启动入口（V4.1：时长预估横幅 + 看门狗登记） |
+| `~/.local/bin/hermes-handover` | 举手汇报写入器（v3 sidecar 版） |
+| `~/.local/bin/handover-board.py` | :20133 面板（systemd 自愈 `ao-handover-board.service`） |
 | `~/.local/bin/ao-verify-patch.sh` | 主动扫描验收补丁（幂等，升级 ao 后重打） |
 | `~/.hermes/handover.db` | 汇报 sidecar 库（独立于主库） |
 

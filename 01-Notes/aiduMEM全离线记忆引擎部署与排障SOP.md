@@ -49,10 +49,10 @@ tags: [aidumem, memory, embedding, bge, sqlite]
 
 ```bash
 # 检查健康探针与存活性
-/home/linxuan/.hermes/scripts/aidumem-curl.sh GET /health | jq .
+~/.hermes/scripts/aidumem-curl.sh GET /health | jq .
 
 # 检查当前记忆与实体总数
-/home/linxuan/.hermes/scripts/aidumem-curl.sh GET /stats | jq .
+~/.hermes/scripts/aidumem-curl.sh GET /stats | jq .
 
 # 备份数据库文件（位于 ~/backups/ 统一归档池）
 cp ~/.hermes/aidumem-v204/data/facts.db ~/backups/facts-backup-$(date +%Y%m%d).db

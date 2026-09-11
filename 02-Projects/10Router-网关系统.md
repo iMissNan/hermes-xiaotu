@@ -21,7 +21,7 @@ aliases: [10Router, AI网关, 路由网关]
 - **认证凭据**：统一口令 `<统一口令>`，详见 [[03-Areas/账号与服务密码管理基线]]
 
 ## 2. 关键运行参数与架构
-- **数据存储卷**：`/home/linxuan/.10router/data`
+- **数据存储卷**：`~/.10router/data`
 - **上游渠道**：
   1. Google Antigravity 原生渠道（绑定 7892 洛杉矶专用节点）；
   2. 南鲨白嫖签到渠道（TokenBom、ChatAI $50/日 等）；

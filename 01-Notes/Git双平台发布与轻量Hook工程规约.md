@@ -19,7 +19,7 @@ tags: [git, github, gitee, conventions, open-source]
 - **只读源仓 vs 工作仓**：
   - `wiki`：维护者只读官方源仓；
   - `wiki-xiaotu`：Agent 协作工作仓。
-- **凭据取用路径**：严禁硬编码明文密码，优先从本地 `state.db` 或 Vaultwarden 台账取用。
+- **凭据取用路径**：严禁硬编码明文密码，优先从 Vaultwarden 账号台账取用。
 
 ---
 
@@ -52,9 +52,8 @@ tags: [git, github, gitee, conventions, open-source]
 # 检查当前仓库的远程双推配置
 git remote -v
 
-# 本地快速双推（需先走代理 7894 出口以防 reset）
-git push origin master
-git push gitee master
+# 本地快速双推（origin=GitHub 主仓，mirror=Gitee 镜像；需先走代理 7894 出口以防 reset）
+git pushall master          # 一条命令双推（推送前自动跑敏感扫描）
 ```
 
 ---

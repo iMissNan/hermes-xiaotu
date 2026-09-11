@@ -21,8 +21,8 @@ aliases: [Obsidian, 知识库系统, 第二大脑]
 - **认证凭据**：统一口令 `<统一口令>`，详见 [[03-Areas/账号与服务密码管理基线]]
 
 ## 2. 关键运行参数与架构
-- **笔记物理目录**：`/home/linxuan/data/obsidian-vault`（挂载至容器内 `/vaults/obsidian-vault`）
-- **配置文件持久化**：`/home/linxuan/.local/opt/obsidian-web/config`
+- **笔记物理目录**：`~/data/obsidian-vault`（挂载至容器内 `/vaults/obsidian-vault`）
+- **配置文件持久化**：`~/.local/opt/obsidian-web/config`
 - **SSL 证书挂载**：挂载宿主 Let's Encrypt 证书至 `/config/ssl/`，保障 WebCodecs 硬件加速正常唤醒。
 
 ## 3. 极简运维指令

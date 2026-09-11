@@ -14,6 +14,19 @@
 | `04-Archives/` | 已下线服务归档 |
 | `00-Inbox/` | 临时碎片收件箱（自动生命周期淘汰） |
 
+## 快速开始
+
+```bash
+git clone https://github.com/iMissNan/hermes-xiaotu.git
+cd hermes-xiaotu
+
+# 启用提交模板与仓库级钩子（提交格式校验 + 敏感真值扫描）
+git config commit.template .gitmessage
+git config core.hooksPath hooks
+```
+
+用 [Obsidian](https://obsidian.md) 打开本目录即可作为知识库使用；仓库内所有真实环境值（域名/IP/口令/账号）均以 `<占位符>` 书写，复刻时全局替换为你自己的环境值。
+
 ## 治理规则（写库纪律）
 
 - **单例主卡**：每个运行中的服务只有一张定稿主卡，更新走"原位追加变更历史"，禁止碎片文件
@@ -23,7 +36,7 @@
 
 ## 声明
 
-- 文中端口、域名、口令写法均为**本机环境快照**，不构成通用部署指南；所有凭据统一由 Vaultwarden 台账管理，**本库不含任何 API 密钥 / token**（推送前经敏感信息扫描）。
+- 涉及真实环境（域名/IP/口令/账号）一律以 `<占位符>` 书写，真实值仅存本地（`.gitignore` 排除），**本库不含任何 API 密钥 / token**，推送前经双重敏感扫描（真值内容扫描 + 密钥形态扫描）。
 - Commit 遵循 Conventional Commits（type 英文 + 中文描述），GitHub 主仓 + Gitee 镜像双平台同步。
 
 ## 许可证
