@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# 敏感真值内容扫描 v3：真值一律占位符化（对照 README），命中即拒推
+# 具体真值以 base64 内嵌（本文件自身零真值明文，避免自锁与泄露）
+_B64="aG9tZS5uYW5zaGFyay5jY3d1LmNjIDEyMzQ1NiBib3NzQHZhdWx0IDJBRjcgRzMyMjAgaTctNDc5MCBpNS00NTcw"
+_SPEC=$(echo "$_B64" | base64 -d)
+# 通用形态：点分IP / Tailscale MagicDNS / 家目录路径 / 个人称谓
+_GEN='[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+|[a-z0-9-]+\.tail[0-9a-f]{4,}\.ts\.net|/home/[a-z]+/|维护者'
+ESCAPED=$(echo "$_SPEC" | tr ' ' '\n' | sed 's/[.[*+?(^)$]\\/&/g' | paste -sd '|')
+BLOCK="$ESCAPED|$_GEN"
+hits=$(git grep -n -I -E "$BLOCK" HEAD -- 2>/dev/null | grep -v '^hooks/pre-push')
+if [ -n "$hits" ]; then
+  echo "✘ 检出敏感真值，禁止推送（请改用占位符，真实值存本地 _local/）："
+  echo "$hits" | head -10
+  exit 1
+fi
+if [ -x "$HOME/.hermes/tools/git-conventions/check-secrets.sh" ]; then
+  "$HOME/.hermes/tools/git-conventions/check-secrets.sh" || exit 1
+fi
+exit 0

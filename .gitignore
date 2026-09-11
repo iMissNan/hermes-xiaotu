@@ -39,3 +39,6 @@ Thumbs.db
 !_attachments/*.webp
 !_attachments/*.svg
 !_attachments/*.pdf
+
+# 5. 本地环境速查卡（真实值，严禁入库）
+_local/

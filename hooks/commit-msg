@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# 提交格式校验：type(scope): 中文描述（≤50字，无句号结尾）
+msg=$(cat "$1")
+head_line="${msg%%$'\n'*}"
+case "$head_line" in Merge\ *) exit 0 ;; esac
+regex='^(feat|fix|docs|style|refactor|perf|test|chore|ci|revert|build)(\([a-zA-Z0-9_-]+\))?!?: .+'
+if ! echo "$head_line" | grep -qE "$regex"; then
+  echo "✘ 提交说明不符合规范：type(scope): 中文描述"
+  echo "  示例：docs(readme): 补充快速开始示例"
+  exit 1
+fi
+subject=$(echo "$head_line" | sed -E 's/^[^:]+: //')
+if [ ${#subject} -gt 50 ]; then
+  echo "✘ 描述超 50 字符（当前 ${#subject}）"; exit 1
+fi
+if echo "$subject" | grep -qE '[。．]$'; then
+  echo "✘ 描述结尾不加句号"; exit 1
+fi
