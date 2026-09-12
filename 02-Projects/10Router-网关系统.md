@@ -92,6 +92,7 @@ docker stats 10router               # 资源占用
 
 - 上游粮仓支持：[[02-Projects/TokenHub-代币资产管家]]
 - 依赖网络出口：[[03-Areas/家庭服务器网络拓扑与DNS解析]]
+- 版本保鲜与升级 SOP：[[03-Areas/GitHub组件版本雷达|GitHub组件版本雷达]]
 
 ---
 ## 4. 变更历史（原位追加）

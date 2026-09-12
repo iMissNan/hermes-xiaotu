@@ -52,5 +52,9 @@ aliases: [网络拓扑, 统一入口]
 - **回国直连**：国内流量与局域网段默认走 `direct`。
 
 ---
+## 3.5 版本保鲜
+- GitHub 血统组件（sing-box/Tailscale/ghcr 系）的版本核对与升级 SOP：[[03-Areas/GitHub组件版本雷达|GitHub组件版本雷达]]
+
+---
 ## 4. 变更历史
 - `2026-09-11`：修正 Obsidian 端口为 HTTPS 8084 并同步入册。
