@@ -10,6 +10,8 @@ aliases: [aiduMEM, 记忆系统, 长期记忆]
 
 # 🧠 aiduMEM 长期记忆系统 (v20.4)
 
+> 🧩 从零复刻本服务：[[replication/4-aiduMEM记忆引擎]]
+
 > 💡 **核心定位**：Hermes Agent 的原生第二大脑与跨会话事实中枢，支持自动蒸馏、向量化检索与实体知识图谱。
 
 ---

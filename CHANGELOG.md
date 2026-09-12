@@ -18,6 +18,7 @@
 - 仓库级双钩子入库（commit-msg 格式校验 + pre-push 敏感真值扫描），clone 即可启用
 - Git 规约卡账号事实修正（GitHub=iMissNan）并更新双推命令为 pushall
 - 10Router 主卡补齐从零复刻部署指南（上游原址/Docker 命令/CN 网络增强补丁/升级迁移），补丁随仓发布
+- 新增系统级复刻体系 replication/：DEPLOYMENT 路线图 + 13 份组件指南 + 验收清单；monpanel/MarsTV/YPM补丁/AO交接面板源码入仓 assets/；服务卡双链回写
 - 公开仓库骨架：README/许可证/协作文档/平台模板（conventional-commits 双钩子）
 
 ### 移除

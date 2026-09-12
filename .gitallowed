@@ -1,0 +1,5 @@
+# check-secrets 例外清单（每行一个 glob 路径）
+# monpanel 登录表单字段定义（pydantic 校验字段/JS 取值，代码逻辑非泄露）
+assets/monpanel/app/main.py
+assets/monpanel/static/index.html
+assets/monpanel/static/chart.umd.min.js

@@ -10,6 +10,8 @@ aliases: [YesPlayMusic, YPM, 音乐播放器]
 
 # 🎵 YesPlayMusic 音乐中心
 
+> 🧩 从零复刻本服务：[[replication/8-YesPlayMusic音乐]]
+
 > 💡 **核心定位**：高颜值自托管网易云音乐网页版，集成自动解灰（UnblockNeteaseMusic），专为维护者定制流行/热歌体验。
 
 ---

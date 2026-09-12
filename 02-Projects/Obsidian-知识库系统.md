@@ -10,6 +10,8 @@ aliases: [Obsidian, 知识库系统, 第二大脑]
 
 # 📚 Obsidian 知识库系统 (Web)
 
+> 🧩 从零复刻本服务：[[replication/5-Obsidian知识库]]
+
 > 💡 **核心定位**：家庭服务器的第二大脑中枢，基于 LinuxServer Obsidian 容器的 WebRTC/WebSocket 像素流式桌面，兼具印象笔记式的高效浏览与本地 Markdown 资产沉淀。
 
 ---
