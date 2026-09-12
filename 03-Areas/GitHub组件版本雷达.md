@@ -8,8 +8,8 @@ status: evergreen
 
 # GitHub 组件版本雷达
 
-> 管辖域：本机所有"真·GitHub 血统"组件的版本保鲜。目标：**上游大版本迭代了，我们不能还踩着有 bug 的旧版本**。
-> 分工：本卡 = 台账 + 更新 SOP；智能巡检 = Hermes cron「GitHub组件版本雷达巡检」（每日 03:30，脚本报告 + agent 分析）；升级动作 = metacubexd 可自主（失败自回滚），其余经权限所有者点头后 agent 执行。
+> 管辖域：本机所有外部血统组件的版本保鲜（GitHub 7 项 + npm/git 镜像运行时 3 项，共 10 项，0912 扩编）。目标：**上游大版本迭代了，我们不能还踩着有 bug 的旧版本**。
+> 分工：本卡 = 台账 + 更新 SOP；智能巡检 = Hermes cron「组件版本雷达巡检」（每日 03:30，脚本报告 + agent 分析）；升级动作 = metacubexd 可自主（失败自回滚），其余经权限所有者点头后 agent 执行。
 
 ## 巡检与更新纪律（拍板于 2026-09-12，同日升级：周检→每日凌晨+agent 思考）
 
@@ -29,8 +29,17 @@ status: evergreen
 | 10Router | ghcr 镜像 | 1.1.0 (rev 2205ba19) | v1.1.0 (09-11) | ✅ 齐平 | 手动（带补丁+db） | [[#ghcr 容器升级 SOP]] |
 | sing-box | Releases 二进制 | 1.14.0 | v1.14.0 (08-31) | ✅ 齐平 | 手动（网络命脉） | [[#sing-box 升级 SOP]] |
 | simplehub | ghcr 镜像 | 容器已停用 | v1.0.2 | ⚪ 被裸机 TokenHub 替代 | 不跟 | 留档 |
+| AO编排器 | npm 全局 | 0.19.2 | npm 0.19.2 | ✅ 齐平 | 手动（executor 补丁） | [[#运行时三件套升级 SOP]] |
+| hermes-web-ui | npm 全局 | **0.7.19** ✅0912升 | npm 0.7.19 | ✅ 齐平 | 手动（:8648 面板） | [[#运行时三件套升级 SOP]] |
+| hermes-agent本体 | cnb 镜像 git 仓 | **f7cd8bf0 / v0.21.2** ✅0912升 | 同左 | ✅ 齐平 | 手动（官方 `hermes update` 一条龙） | [[#运行时三件套升级 SOP]] |
 
-> 上游数据来自 GitHub API `releases/latest`；ghcr 镜像无版本标签时以镜像构建日期（`docker inspect .Created`）为锚。
+### 运行时三件套升级 SOP（0912 扩编新增）
+
+- **AO编排器**（`agency-orchestrator`，npm）：本机 `dist/core/executor.js` 打有交接/状态透传补丁，`npm update -g` 整包覆盖=补丁必丢。流程：备份补丁件 → `npm install -g agency-orchestrator@<新>` → 重打补丁（参照 replication 资产 ao-handover 与 `ao-run-safe` 约定）→ 回归 `ao compose`→`ao run` 全链路。回滚=装回旧版本号。
+- **hermes-web-ui**（npm）：影响 :8648 网页版（0912 实测：0.7.17→0.7.19 一次过）。流程：`export https_proxy=http://127.0.0.1:7894` → `npm install -g hermes-web-ui@<新> --prefix ~/.npm-global` → `sudo systemctl restart hermes-webui` → curl :8648 出 200 + 日志见 `startup complete` 与会话 stats 读写（=数据无恙）。回滚=装回旧版本号。升级会掉当前网页会话，须挑没人用的时段。npm 二进制在 `~/.local/opt/node23/bin/npm`（`.npm-global/bin` 下没有 npm，别想当然）。
+- **hermes-agent 本体**（`~/.hermes/hermes-agent`，git 仓，**官方渠道 `hermes update`**）：0912 实测 v0.21.1→v0.21.2 一条龙成功——自动做 pre-update 状态快照（`~/.hermes/state-snapshots/<ts>-pre-update`）、autostash、git pull、uv 重装依赖、config 格式迁移、并自动重启用户级 hermes-gateway。**无需手工重打补丁**（Antigravity 毒句与 lark 件已进上游/镜像历史，本地工作区本就干净可纯 ff；升级后抽查：prompt_builder 归属句计数=0、Lark 日志 `connected to wss://msg-frontier.feishu.cn`）。坑：① cnb 镜像会重写上游 commit SHA（同一改动两历史，`merge-base --is-ancestor` 判包含关系而非 SHA 比对）；② 升级后 journal 里 "previous update did not restart gateways" 警告是自检提示**历史**遗留，本次已当场自愈；③ update 会顺手改 config（通知档/delegation 上限），升级后须核对关键设置。回滚=reset 旧 commit + 还原 state-snapshot。`hermes update --check` 可作零风险体检前置。
+
+> 上游数据来自 GitHub API `releases/latest`；ghcr 镜像无版本标签时以镜像构建日期（`docker inspect .Created`）为锚；npm 系走 registry dist-tags；本体仓以 cnb 镜像 origin/main 为锚（fetch 刷新后再比，防假齐平）。
 
 ## 升级 SOP（取证自本机实况，2026-09-12）
 
@@ -100,6 +109,9 @@ curl -sf --max-time 10 http://127.0.0.1:9097 >/dev/null && echo OK || { 回滚�
 | 2026-09-12 | Tailscale | 1.80.3→1.102.4（官方包站 tgz，CLI+守护端同换，备份 .bak-1.80.3） | ✅ 三连验证过（版本/节点/8443 门 200） |
 | 2026-09-12 | Homarr | 08-05 镜像→09-12 新镜像（v1.77.1 代际）；先 docker cp 全量备份 /appdata，重建容器（原端口/卷/env-file）后塞回数据+restart | ✅ 迁移日志正常，DB 36 表数据完整（1 用户/1 面板/10 应用），浏览器直进面板会话未掉 |
 | 2026-09-12 | AI Token大盘 | bfa2f24→3761176（+12 提交，含 Grok/DeepSeek-Harness/Pi 采集器与配额窗口修复）；stash 本地定制→ff merge→pop 解 1 冲突（上游已收编 pricing-custom 机制，死代码块 DEEPSEEK_OVERRIDES 删除） | ✅ node 语法过、服务重启 active、:8096 返回 200、15 文件本地定制保留未提交 |
+| 2026-09-12 | — | **雷达扩编 v3**：+运行时三件套探针（AO/hermes-web-ui/hermes-agent 本体，npm/cnb 镜像渠道），监控面 7→10；值守 prompt 补三件套风险纪律；cron 更名「组件版本雷达巡检」。扩编即揪出 web-ui 落后 2 版、本体落后 10 提交（含 DeepSeek 窗口修复） | ✅ 脚本实测 10 项全报告出，误报清零 |
+| 2026-09-12 | hermes-web-ui | 0.7.17→0.7.19（代理走 7894 npm 装新，sudo 重启服务） | ✅ :8648 出 200、标题正常、日志 startup complete + 会话 stats 读写=数据无恙 |
+| 2026-09-12 | hermes-agent本体 | v0.21.1→v0.21.2（官方 `hermes update --backup --yes` 一条龙：快照+ff pull+依赖+config v33→v43+重启 gateway） | ✅ version 实锤、Lark wss 连接正常、归属句补丁面零回潮、上游两 remote 齐平；DeepSeek 1M 窗口修复已进 model_metadata.py |
 
 ## 关联
 
