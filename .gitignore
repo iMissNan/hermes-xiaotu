@@ -42,3 +42,6 @@ Thumbs.db
 
 # 5. 本地环境速查卡（真实值，严禁入库）
 _local/
+
+# 复刻体系例外：MarsTV 源码包为有意入库的自研资产（1.7M）
+!assets/martv-source.tar.gz

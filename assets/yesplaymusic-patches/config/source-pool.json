@@ -1,0 +1,100 @@
+{
+  "version": 3,
+  "updatedAt": "2026-09-02T00:00:00Z",
+  "sources": [
+    {
+      "name": "netease-vip",
+      "type": "official",
+      "enabled": true,
+      "priority": 1,
+      "note": "网易云 song/url（NETEASE_COOKIE VIP 登录态），最高音质"
+    },
+    {
+      "name": "unm-kuwo",
+      "type": "unm",
+      "enabled": true,
+      "priority": 2,
+      "note": "UNM 酷我源（占位音指纹已拦截）"
+    },
+    {
+      "name": "unm-bilibili",
+      "type": "unm",
+      "enabled": true,
+      "priority": 3,
+      "note": "UNM B站源"
+    },
+    {
+      "name": "unm-migu",
+      "type": "unm",
+      "enabled": true,
+      "priority": 4,
+      "note": "UNM 咪咕源（API 改版，待巡检验证）"
+    },
+    {
+      "name": "unm-kugou",
+      "type": "unm",
+      "enabled": true,
+      "priority": 5,
+      "note": "UNM 酷狗源"
+    },
+    {
+      "name": "gds-netease",
+      "type": "gdstudio",
+      "enabled": true,
+      "priority": 6,
+      "note": "gdstudio 聚合-网易通道"
+    },
+    {
+      "name": "gds-kuwo",
+      "type": "gdstudio",
+      "enabled": true,
+      "priority": 7,
+      "note": "gdstudio 聚合-酷我通道"
+    },
+    {
+      "name": "gds-bilibili",
+      "type": "gdstudio",
+      "enabled": true,
+      "priority": 8,
+      "note": "gdstudio 聚合-B站通道"
+    },
+    {
+      "name": "gds-joox",
+      "type": "gdstudio",
+      "enabled": true,
+      "priority": 9,
+      "note": "gdstudio 聚合-joox 通道"
+    },
+    {
+      "name": "gds-tencat",
+      "type": "gdstudio",
+      "enabled": false,
+      "priority": 10,
+      "note": "gdstudio 腾讯通道（上次 400，巡检定夺）"
+    },
+    {
+      "name": "cue-meta",
+      "type": "community",
+      "enabled": true,
+      "priority": 11,
+      "note": "社区公共 API cue.me/meta（巡检定夺）"
+    }
+  ],
+  "placeholderMd5s": [
+    "86e42315600b9137e26ad17d54f3d622"
+  ],
+  "lastHealthCheck": "2026-09-11T21:00:53+00:00",
+  "healthStatus": {
+    "netease-vip": "alive",
+    "unm-kuwo": "dead",
+    "unm-bilibili": "dead",
+    "unm-migu": "dead",
+    "unm-kugou": "dead",
+    "gds-netease": "alive",
+    "gds-kuwo": "dead",
+    "gds-bilibili": "dead",
+    "gds-joox": "alive",
+    "gds-tencat": "disabled",
+    "cue-meta": "dead"
+  }
+}
