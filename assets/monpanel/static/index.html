@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>monpanel · 系统监控</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+<style>
+:root{
+  --bg:#0b1220; --bg2:#0f172a; --panel:#131c31; --panel2:#18233c;
+  --border:#243350; --text:#e2e8f0; --muted:#8fa3c0; --accent:#38bdf8;
+  --green:#34d399; --red:#f87171; --amber:#fbbf24; --pink:#f472b6;
+}
+*{box-sizing:border-box; margin:0; padding:0}
+html,body{height:100%}
+body{font-family:-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',Roboto,sans-serif; background:var(--bg); color:var(--text); min-height:100vh}
+.hidden{display:none!important}
+button{font-family:inherit}
+
+/* ── 登录页 ─────────────────────────────── */
+.view-login{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(56,189,248,.14), transparent 60%),
+    radial-gradient(900px 500px at 90% 110%, rgba(52,211,153,.10), transparent 55%),
+    var(--bg);}
+.login-card{width:100%; max-width:380px; background:var(--panel); border:1px solid var(--border);
+  border-radius:16px; padding:32px; box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.login-brand{display:flex; align-items:center; gap:10px; font-size:20px; font-weight:700}
+.login-brand svg{flex:none}
+.login-sub{color:var(--muted); font-size:13px; margin:6px 0 22px}
+.login-field label{display:block; font-size:12px; color:var(--muted); margin:14px 0 6px}
+input{width:100%; background:var(--bg2); border:1px solid var(--border); color:var(--text);
+  border-radius:8px; padding:10px 12px; font-size:14px; outline:none; font-family:inherit}
+input:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(56,189,248,.15)}
+.login-error{color:var(--red); font-size:13px; min-height:18px; margin-top:12px}
+.login-field .btn{width:100%; margin-top:18px; justify-content:center; padding:11px}
+
+/* ── 按钮 ───────────────────────────────── */
+.btn{display:inline-flex; align-items:center; gap:6px; border:1px solid var(--border);
+  background:var(--panel2); color:var(--text); border-radius:8px; padding:8px 14px;
+  font-size:13px; cursor:pointer; transition:all .15s; white-space:nowrap}
+.btn:hover{border-color:var(--accent); color:var(--accent)}
+.btn:disabled{opacity:.5; cursor:not-allowed; pointer-events:none}
+.btn-primary{background:linear-gradient(135deg,#0ea5e9,#6366f1); border:none; color:#fff; font-weight:600}
+.btn-primary:hover{filter:brightness(1.12); color:#fff}
+.btn-sm{padding:3px 10px; font-size:12px; border-radius:6px}
+.btn-danger{color:var(--red); border-color:rgba(248,113,113,.35)}
+.btn-danger:hover{border-color:var(--red); background:rgba(248,113,113,.1); color:var(--red)}
+.btn-success{color:var(--green); border-color:rgba(52,211,153,.35)}
+.btn-success:hover{border-color:var(--green); background:rgba(52,211,153,.1); color:var(--green)}
+.btn-warn{color:var(--amber); border-color:rgba(251,191,36,.35)}
+.btn-warn:hover{border-color:var(--amber); background:rgba(251,191,36,.1); color:var(--amber)}
+
+/* ── 仪表盘骨架 ─────────────────────────── */
+.dash-header{position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:14px;
+  padding:12px 20px; background:rgba(11,18,32,.85); backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--border)}
+.brand{font-weight:700; font-size:16px; display:flex; align-items:center; gap:8px}
+.brand svg{flex:none}
+.conn{display:flex; align-items:center; gap:7px; font-size:12px; color:var(--muted)}
+.dot{width:8px; height:8px; border-radius:50%; background:#64748b}
+.dot.ok{background:var(--green); box-shadow:0 0 8px var(--green)}
+.dot.bad{background:var(--red); box-shadow:0 0 8px var(--red)}
+.spacer{flex:1}
+main{max-width:1440px; margin:0 auto; padding:20px}
+.card{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:16px}
+.card h3{font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em;
+  margin-bottom:12px; font-weight:600}
+.grid-cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px}
+.stat-row{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; font-size:13px}
+.stat-row .k{color:var(--muted)}
+.stat-row .v{font-weight:600; font-variant-numeric:tabular-nums}
+.bar{height:6px; background:#1e2a45; border-radius:4px; overflow:hidden; margin-top:10px}
+.bar-fill{height:100%; border-radius:4px; background:linear-gradient(90deg,var(--accent),#6366f1); transition:width .6s}
+.bar-fill.green{background:linear-gradient(90deg,#34d399,#22d3ee)}
+.bar-fill.amber{background:linear-gradient(90deg,#fbbf24,#f472b6)}
+.sensor-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+.sensor{display:flex; justify-content:space-between; background:var(--bg2); border:1px solid var(--border);
+  border-radius:8px; padding:8px 10px; font-size:13px}
+.sensor b{font-variant-numeric:tabular-nums}
+.sensor-na{color:var(--muted); font-size:13px; padding:14px 0; text-align:center}
+section{margin-top:18px}
+section h2{font-size:15px; font-weight:600; margin-bottom:10px; display:flex; align-items:center; gap:8px}
+section h2 .hint{font-size:11px; color:var(--muted); font-weight:400}
+.charts-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+.chart-wrap{position:relative; height:220px}
+
+/* ── 表格 ───────────────────────────────── */
+.table-wrap{overflow-x:auto}
+table{width:100%; border-collapse:collapse; font-size:13px}
+thead th{text-align:left; color:var(--muted); font-weight:600; font-size:12px; padding:8px 10px;
+  border-bottom:1px solid var(--border); white-space:nowrap}
+/* ── 分页 ──────────────────────────────── */
+.pager{display:flex; align-items:center; gap:8px; padding:10px 2px 2px; flex-wrap:wrap}
+.pager-info{font-size:12px; color:var(--muted)}
+.pager button[disabled]{opacity:.4; cursor:not-allowed}
+tbody td{padding:8px 10px; border-bottom:1px solid rgba(36,51,80,.5); font-variant-numeric:tabular-nums; white-space:nowrap}
+tbody tr:hover{background:rgba(56,189,248,.04)}
+td.num{text-align:right}
+td.ops{text-align:right}
+.empty{color:var(--muted); text-align:center; padding:18px!important}
+.badge{padding:2px 8px; border-radius:20px; font-size:11px; background:#1e2a45; color:var(--muted); border:1px solid var(--border)}
+.badge.active{background:rgba(52,211,153,.12); color:var(--green); border-color:rgba(52,211,153,.3)}
+.badge.failed{background:rgba(248,113,113,.12); color:var(--red); border-color:rgba(248,113,113,.3)}
+
+/* ── 密码确认弹窗 ───────────────────────── */
+.modal{position:fixed; inset:0; background:rgba(2,6,17,.7); backdrop-filter:blur(3px);
+  display:flex; align-items:center; justify-content:center; z-index:100; padding:20px}
+.modal-card{width:100%; max-width:380px; background:var(--panel); border:1px solid var(--border);
+  border-radius:14px; padding:24px; box-shadow:0 24px 70px rgba(0,0,0,.5)}
+.modal-card h3{font-size:15px; margin-bottom:6px; word-break:break-all}
+.modal-hint{font-size:12px; color:var(--muted); margin-bottom:12px}
+.modal-error{color:var(--red); font-size:12px; min-height:16px; margin-top:10px}
+.modal-actions{display:flex; gap:10px; margin-top:16px}
+.modal-actions .btn{flex:1; justify-content:center}
+
+/* ── Toast ──────────────────────────────── */
+.toast{position:fixed; right:16px; bottom:16px; background:var(--panel2); border:1px solid var(--border);
+  color:var(--text); padding:10px 16px; border-radius:10px; font-size:13px; opacity:0;
+  transform:translateY(8px); transition:.25s; pointer-events:none; z-index:200; max-width:340px}
+.toast.show{opacity:1; transform:none}
+.toast.ok{border-color:rgba(52,211,153,.5)}
+.toast.err{border-color:rgba(248,113,113,.5)}
+.toast.warn{border-color:rgba(251,191,36,.5)}
+
+.dash-footer{text-align:center; color:#5b6b85; font-size:12px; padding:18px 0 26px}
+@media (max-width:900px){.charts-grid{grid-template-columns:1fr}}
+@media (max-width:420px){.sensor-grid{grid-template-columns:1fr}}
+
+/* ── 移动端适配（≤768px） ─────────────── */
+@media (max-width:768px){
+  .dash-header{flex-wrap:wrap; gap:8px 10px; padding:10px 14px}
+  .dash-header .conn{order:4; width:100%}
+  main{padding:14px}
+  .grid-cards{grid-template-columns:1fr}
+  .chart-wrap{height:240px}
+  a,button{min-height:44px; min-width:44px}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ 登录视图 ══════════ -->
+<div id="view-login" class="view-login">
+  <div class="login-card" role="main">
+    <div class="login-brand">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 4-6" stroke="#34d399"/></svg>
+      monpanel
+    </div>
+    <div class="login-sub">系统监控管理台 · 请登录</div>
+    <form id="login-form" novalidate>
+      <div class="login-field">
+        <label for="login-username">用户名</label>
+        <input id="login-username" name="username" type="text" autocomplete="username" value="admin" required>
+      </div>
+      <div class="login-field">
+        <label for="login-password">密码</label>
+        <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <div id="login-error" class="login-error" role="alert" aria-live="assertive"></div>
+      <button id="login-btn" class="btn btn-primary" type="submit">登 录</button>
+    </form>
+  </div>
+</div>
+
+<!-- ══════════ 仪表盘视图 ══════════ -->
+<div id="view-dashboard" class="hidden">
+  <header class="dash-header">
+    <div class="brand">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 4-6" stroke="#34d399"/></svg>
+      monpanel
+    </div>
+    <div class="conn" title="API 连接状态"><span id="conn-dot" class="dot"></span><span id="conn-text">连接中…</span></div>
+    <div class="spacer"></div>
+    <button id="btn-logout" class="btn btn-sm">退出登录</button>
+  </header>
+
+  <main>
+    <!-- 硬件信息 -->
+    <section aria-label="硬件信息">
+      <h2>硬件信息</h2>
+      <div class="grid-cards">
+        <div class="card">
+          <h3>CPU</h3>
+          <div class="stat-row"><span class="k">型号</span><span class="v" id="cpu-model">—</span></div>
+          <div class="stat-row"><span class="k">核心数</span><span class="v" id="cpu-cores">—</span></div>
+          <div class="stat-row"><span class="k">使用率</span><span class="v" id="cpu-usage">—</span></div>
+          <div id="cpu-bar"></div>
+        </div>
+        <div class="card">
+          <h3>内存</h3>
+          <div class="stat-row"><span class="k">总量</span><span class="v" id="mem-total">—</span></div>
+          <div class="stat-row"><span class="k">已用</span><span class="v" id="mem-used">—</span></div>
+          <div class="stat-row"><span class="k">占用</span><span class="v" id="mem-pct">—</span></div>
+          <div id="mem-bar"></div>
+        </div>
+        <div class="card">
+          <h3>网络</h3>
+          <div class="stat-row"><span class="k">接收 ↓</span><span class="v" id="net-rx">—</span></div>
+          <div class="stat-row"><span class="k">发送 ↑</span><span class="v" id="net-tx">—</span></div>
+          <div class="stat-row"><span class="k">接口</span><span class="v" id="net-iface">—</span></div>
+        </div>
+        <div class="card">
+          <h3>系统</h3>
+          <div class="stat-row"><span class="k">主机名</span><span class="v" id="sys-host">—</span></div>
+          <div class="stat-row"><span class="k">系统</span><span class="v" id="sys-os">—</span></div>
+          <div class="stat-row"><span class="k">内核</span><span class="v" id="sys-kernel">—</span></div>
+          <div class="stat-row"><span class="k">运行时间</span><span class="v" id="sys-uptime">—</span></div>
+        </div>
+        <div class="card">
+          <h3>传感器</h3>
+          <div id="sensors-box"><div class="sensor-na">加载中…</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 磁盘 -->
+    <section aria-label="磁盘">
+      <h2>磁盘 <span class="hint">按挂载点</span></h2>
+      <div class="card table-wrap">
+        <table>
+          <thead><tr><th>挂载点</th><th>文件系统</th><th class="num">总容量</th><th class="num">已用</th><th class="num">使用率</th><th>占用</th></tr></thead>
+          <tbody id="disk-tbody"></tbody>
+        </table>
+        <div class="pager" id="disks-pager"></div>
+      </div>
+    </section>
+
+    <!-- 实时曲线 -->
+    <section aria-label="实时指标">
+      <h2>实时指标 <span class="hint">每 2 秒刷新 · 最近 60 点</span></h2>
+      <div class="charts-grid">
+        <div class="card"><h3>CPU %</h3><div class="chart-wrap"><canvas id="chart-cpu" role="img" aria-label="CPU 使用率曲线"></canvas></div></div>
+        <div class="card"><h3>内存 %</h3><div class="chart-wrap"><canvas id="chart-mem" role="img" aria-label="内存使用率曲线"></canvas></div></div>
+        <div class="card"><h3>网络收发</h3><div class="chart-wrap"><canvas id="chart-net" role="img" aria-label="网络收发速率曲线"></canvas></div></div>
+        <div class="card"><h3>磁盘 IO</h3><div class="chart-wrap"><canvas id="chart-disk" role="img" aria-label="磁盘 IO 曲线"></canvas></div></div>
+      </div>
+    </section>
+
+    <!-- 进程 -->
+    <section aria-label="进程">
+      <h2>进程 <span class="hint">按 CPU 降序 · 每 5 秒刷新</span></h2>
+      <div class="card table-wrap">
+        <table>
+          <thead><tr><th>PID</th><th>名称</th><th>用户</th><th class="num">CPU %</th><th class="num">内存 %</th><th>状态</th><th class="ops">操作</th></tr></thead>
+          <tbody id="proc-tbody"></tbody>
+        </table>
+        <div class="pager" id="procs-pager"></div>
+      </div>
+    </section>
+
+    <!-- 服务 -->
+    <section aria-label="服务">
+      <h2>服务</h2>
+      <div class="card table-wrap">
+        <table>
+          <thead><tr><th>单元</th><th>状态</th><th>子状态</th><th>描述</th><th class="ops">操作</th></tr></thead>
+          <tbody id="svc-tbody"></tbody>
+        </table>
+        <div class="pager" id="svcs-pager"></div>
+      </div>
+    </section>
+
+    <!-- 端口 -->
+    <section aria-label="端口监听">
+      <h2>端口监听</h2>
+      <div class="card table-wrap">
+        <table>
+          <thead><tr><th>协议</th><th>本地地址</th><th class="num">端口</th><th>进程</th></tr></thead>
+          <tbody id="port-tbody"></tbody>
+        </table>
+        <div class="pager" id="ports-pager"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="dash-footer">monpanel v0.1.0 <!-- 版本号占位：上线前替换为实际版本 --></footer>
+</div>
+
+<!-- ══════════ 密码确认弹窗（高危操作二次认证） ══════════ -->
+<div id="action-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal-card">
+    <h3 id="modal-title">确认操作</h3>
+    <p class="modal-hint">该操作不可撤销，请输入管理员密码以确认</p>
+    <label for="modal-password" style="font-size:12px;color:var(--muted)">密码</label>
+    <input id="modal-password" type="password" autocomplete="current-password" style="margin-top:6px">
+    <div id="modal-error" class="modal-error" role="alert" aria-live="assertive"></div>
+    <div class="modal-actions">
+      <button id="modal-cancel" class="btn" type="button">取消</button>
+      <button id="modal-confirm" class="btn btn-primary" type="button">确认</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<!-- Chart.js：优先 CDN，加载失败自动回退本地 /static/chart.umd.min.js -->
+<script>
+window.loadLocalChart = function(){
+  var s = document.createElement('script');
+  s.src = '/static/chart.umd.min.js';
+  s.onload = function(){ window.__chartReady = true; };
+  document.head.appendChild(s);
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"
+        onerror="window.loadLocalChart()"></script>
+
+<script>
+'use strict';
+/* ═══════════ 配置 ═══════════ */
+const MAX_POINTS = 60;          // 曲线保留最近 60 个采样点（2s × 60 = 2 分钟）
+let charts = {}, timers = {}, authed = false;
+
+/* ═══════════ 工具 ═══════════ */
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pick = (o, keys, dflt) => { if (!o) return dflt; for (const k of keys) if (o[k] !== undefined && o[k] !== null) return o[k]; return dflt; };
+const num = v => { const n = Number(v); return Number.isFinite(n) ? n : null; };
+
+function fmtBytes(v){
+  const n = num(v); if (n === null) return '—';
+  if (n < 1024) return n + ' B';
+  if (n < 1048576) return (n/1024).toFixed(1) + ' KB';
+  if (n < 1073741824) return (n/1048576).toFixed(1) + ' MB';
+  return (n/1073741824).toFixed(2) + ' GB';
+}
+function fmtPct(v){
+  const n = num(v); if (n === null) return '—';
+  return n.toFixed(1) + '%';
+}
+function fmtUptime(sec){
+  const n = num(sec); if (n === null) return '—';
+  if (n < 60) return Math.floor(n) + ' 秒';
+  const d = Math.floor(n/86400), h = Math.floor(n%86400/3600), m = Math.floor(n%3600/60);
+  if (d) return d + ' 天 ' + h + ' 小时';
+  if (h) return h + ' 小时 ' + m + ' 分';
+  return m + ' 分';
+}
+function bar(pct, cls){
+  const p = Math.max(0, Math.min(100, num(pct) ?? 0));
+  return '<div class="bar"><div class="bar-fill ' + (cls || '') + '" style="width:' + p + '%"></div></div>';
+}
+function statusCls(s){
+  const st = String(s || '').toLowerCase();
+  if (['active','running'].includes(st)) return 'active';
+  if (['failed','dead','stopped','inactive','zombie'].includes(st)) return 'failed';
+  return '';
+}
+
+/* ═══════════ 表格分页 ═══════════ */
+const PAGE_SIZE = 10;                     // 每页条数
+const pageState = { procs: 1, svcs: 1, ports: 1, disks: 1 };   // 各表当前页
+const tableCache = { procs: [], svcs: [], ports: [], disks: [] }; // 最近一次全量数据
+
+function slicePage(list, key){
+  const total = list.length;
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (pageState[key] > pages) pageState[key] = pages;
+  const start = (pageState[key] - 1) * PAGE_SIZE;
+  return { rows: list.slice(start, start + PAGE_SIZE), pages, total };
+}
+
+function renderPager(key){
+  const el = document.getElementById(key + '-pager');
+  if (!el) return;
+  const total = tableCache[key].length;
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const p = pageState[key];
+  if (pages <= 1) { el.innerHTML = ''; return; }
+  el.innerHTML =
+    '<button class="btn btn-sm" data-pg="' + key + '" data-delta="-1"' + (p <= 1 ? ' disabled' : '') + '>上一页</button>' +
+    '<span class="pager-info">第 ' + p + ' / ' + pages + ' 页 · 共 ' + total + ' 条</span>' +
+    '<button class="btn btn-sm" data-pg="' + key + '" data-delta="1"' + (p >= pages ? ' disabled' : '') + '>下一页</button>';
+}
+
+// 翻页事件委托（不重新 fetch，用缓存重渲染）
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-pg]');
+  if (!btn) return;
+  const key = btn.dataset.pg, delta = Number(btn.dataset.delta);
+  const list = tableCache[key] || [];
+  const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  pageState[key] = Math.min(pages, Math.max(1, pageState[key] + delta));
+  const renderers = { procs: renderProcRows, svcs: renderSvcRows, ports: renderPortRows, disks: renderDiskRows };
+  (renderers[key] || function(){})();
+});
+
+let toastTimer = null;
+function toast(msg, type){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (type || '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = 'toast'; }, 3500);
+}
+function setConn(ok){
+  $('#conn-dot').classList.toggle('ok', ok);
+  $('#conn-dot').classList.toggle('bad', !ok);
+  $('#conn-text').textContent = ok ? '已连接' : '连接异常';
+}
+
+/* ═══════════ 401 统一守卫：会话失效自动跳回登录页 ═══════════ */
+function authGuard(res){
+  if (res.status === 401 && authed) {
+    authed = false;
+    showLogin();
+    toast('会话已过期，请重新登录', 'warn');
+  }
+  return res;
+}
+
+/* ═══════════ 视图切换 ═══════════ */
+function showLogin(){
+  authed = false;
+  stopTimers();
+  $('#view-dashboard').classList.add('hidden');
+  $('#view-login').classList.remove('hidden');
+  $('#login-password').focus();
+}
+function showDashboard(){
+  $('#view-login').classList.add('hidden');
+  $('#view-dashboard').classList.remove('hidden');
+}
+
+/* ═══════════ 登录 / 登出 / 会话检查 ═══════════ */
+async function checkAuth(){
+  try {
+    // 401 属预期结果（未登录），不触发守卫跳转
+    const res = await fetch('/api/auth/check', { credentials: 'include' });
+    if (res.ok) { authed = true; showDashboard(); await loadAll(); startTimers(); }
+    else showLogin();
+  } catch (e) { showLogin(); }
+}
+
+$('#login-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = $('#login-btn');
+  btn.disabled = true; btn.textContent = '登录中…';
+  const errBox = $('#login-error'); errBox.textContent = '';
+  try {
+    // 登录失败(401/429)走表单内联报错，不触发守卫
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: $('#login-username').value.trim(),
+        password: $('#login-password').value
+      })
+    });
+    if (res.ok) {
+      authed = true;
+      showDashboard();
+      await loadAll();
+      startTimers();
+    } else {
+      const d = await res.json().catch(() => ({}));
+      errBox.textContent = d.detail || ('登录失败 (' + res.status + ')');
+      $('#login-password').select();
+    }
+  } catch (err) {
+    errBox.textContent = '网络错误：无法连接服务器';
+  } finally {
+    btn.disabled = false; btn.textContent = '登 录';
+  }
+});
+
+$('#btn-logout').addEventListener('click', async () => {
+  try { await fetch('/api/logout', { method: 'POST', credentials: 'include' }); } catch (e) {}
+  showLogin();
+});
+
+/* ═══════════ 数据加载 ═══════════ */
+async function loadAll(){
+  await Promise.allSettled([loadHardware(), loadSensors(), loadMetrics(), loadProcesses(), loadServices(), loadPorts()]);
+}
+
+async function loadHardware(){
+  try {
+    const res = await authGuard(await fetch('/api/hardware', { credentials: 'include' }));
+    if (!res.ok) return;
+    const d = await res.json();
+    const cpu = d.cpu || {}, mem = d.memory || {}, net = d.network || {}, sys = d.system || {};
+    const ni = Array.isArray(net) && net[0] ? net[0] : (net || {});
+    $('#net-rx').textContent = fmtBytes(pick(ni, ['rx_speed','rx_rate','rx','rx_bytes_per_sec'], 0)) + '/s';
+    $('#net-tx').textContent = fmtBytes(pick(ni, ['tx_speed','tx_rate','tx','tx_bytes_per_sec'], 0)) + '/s';
+    $('#net-iface').textContent = pick(ni, ['iface','interface','dev','name'], '—');
+    $('#cpu-model').textContent = pick(cpu, ['model','model_name','brand'], '—');
+    $('#cpu-cores').textContent = pick(cpu, ['cores','core_count','physical_cores'], '—') + ' 核';
+    const cpuPct = pick(cpu, ['percent','usage','utilization','usage_percent'], 0);
+    $('#cpu-usage').textContent = fmtPct(cpuPct);
+    $('#cpu-bar').innerHTML = bar(cpuPct);
+    const memTotal = num(pick(mem, ['total'], 0)), memUsed = num(pick(mem, ['used'], 0));
+    const memPct = pick(mem, ['percent','usage_percent'], memTotal ? memUsed/memTotal*100 : 0);
+    $('#mem-total').textContent = fmtBytes(memTotal);
+    $('#mem-used').textContent = fmtBytes(memUsed);
+    $('#mem-pct').textContent = fmtPct(memPct);
+    $('#mem-bar').innerHTML = bar(memPct, 'green');
+    $('#net-rx').textContent = fmtBytes(pick(net, ['rx_speed','rx_rate','rx'], 0)) + '/s';
+    $('#net-tx').textContent = fmtBytes(pick(net, ['tx_speed','tx_rate','tx'], 0)) + '/s';
+    $('#net-iface').textContent = pick(net, ['iface','interface','dev'], '—');
+    $('#sys-host').textContent = pick(sys, ['hostname','host','node'], '—');
+    $('#sys-os').textContent = pick(sys, ['os','platform','system'], '—');
+    $('#sys-kernel').textContent = pick(sys, ['kernel','release','version'], '—');
+    $('#sys-uptime').textContent = fmtUptime(pick(sys, ['uptime','uptime_seconds'], 0));
+    // 磁盘：逐挂载点
+    tableCache.disks = Array.isArray(d.disk) ? d.disk : [];
+    renderDiskRows();
+    setConn(true);
+  } catch (e) { setConn(false); }
+}
+
+function renderDiskRows(){
+  const tb = $('#disk-tbody');
+  if (!tb) return;
+  const { rows, pages, total } = slicePage(tableCache.disks, 'disks');
+  if (!rows.length) { tb.innerHTML = '<tr><td colspan="6" class="empty">无磁盘数据</td></tr>'; }
+  else {
+    tb.innerHTML = rows.map(m => {
+      const pct = pick(m, ['percent','use','usage'], 0);
+      return '<tr>' +
+        '<td>' + esc(pick(m, ['mount','mountpoint','mount_point'], '—')) + '</td>' +
+        '<td>' + esc(pick(m, ['fs','filesystem','device','dev'], '—')) + '</td>' +
+        '<td class="num">' + fmtBytes(pick(m, ['total','size'], 0)) + '</td>' +
+        '<td class="num">' + fmtBytes(pick(m, ['used'], 0)) + '</td>' +
+        '<td class="num">' + fmtPct(pct) + '</td>' +
+        '<td style="min-width:140px">' + bar(pct, 'amber') + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+  renderPager('disks');
+}
+
+async function loadSensors(){
+  try {
+    const res = await authGuard(await fetch('/api/sensors', { credentials: 'include' }));
+    if (!res.ok) return;
+    const d = await res.json();
+    const box = $('#sensors-box');
+    const temps = Array.isArray(d && d.temperatures) ? d.temperatures : [];
+    if (!d || d.status === 'N/A' || !temps.length) {
+      box.innerHTML = '<div class="sensor-na">N/A（无传感器）</div>';
+    } else {
+      box.innerHTML = temps.map(t =>
+        '<div class="sensor"><span>' + esc(pick(t, ['name','label','sensor'], '—')) + '</span><b>' +
+        esc(pick(t, ['value','temp','temperature','current','current_c'], '—')) + ' °C</b></div>'
+      ).join('');
+    }
+    setConn(true);
+  } catch (e) { setConn(false); }
+}
+
+async function loadMetrics(){
+  try {
+    const res = await authGuard(await fetch('/api/metrics', { credentials: 'include' }));
+    if (!res.ok) return;
+    const d = await res.json();
+    const labels = (d.timestamps || []).slice(-MAX_POINTS);
+    const slice = a => (Array.isArray(a) ? a : []).slice(-MAX_POINTS);
+    if (!charts.cpu) initCharts();
+    charts.cpu.data.labels = labels;
+    charts.cpu.data.datasets[0].data = slice(d.cpu);
+    charts.mem.data.labels = labels;
+    charts.mem.data.datasets[0].data = slice(d.memory);
+    charts.net.data.labels = labels;
+    charts.net.data.datasets[0].data = slice(d.net_rx);
+    charts.net.data.datasets[1].data = slice(d.net_tx);
+    charts.disk.data.labels = labels;
+    charts.disk.data.datasets[0].data = slice(d.disk_io);
+    ['cpu','mem','net','disk'].forEach(k => charts[k].update('none'));
+    setConn(true);
+  } catch (e) { setConn(false); }
+}
+
+async function loadProcesses(){
+  try {
+    const res = await authGuard(await fetch('/api/processes', { credentials: 'include' }));
+    if (!res.ok) return;
+    const d = await res.json();
+    tableCache.procs = (Array.isArray(d) ? d : (d.processes || [])).slice().sort((a, b) => (num(b.cpu_percent) ?? -1) - (num(a.cpu_percent) ?? -1));
+    renderProcRows();
+    setConn(true);
+  } catch (e) { setConn(false); }
+}
+
+function renderProcRows(){
+  const tb = $('#proc-tbody');
+  if (!tb) return;
+  const { rows, pages, total } = slicePage(tableCache.procs, 'procs');
+  if (!rows.length) { tb.innerHTML = '<tr><td colspan="7" class="empty">无进程数据</td></tr>'; return; }
+  tb.innerHTML = rows.map(p => '<tr>' +
+    '<td>' + esc(p.pid) + '</td>' +
+    '<td>' + esc(p.name) + '</td>' +
+    '<td>' + esc(p.username) + '</td>' +
+    '<td class="num">' + fmtPct(p.cpu_percent) + '</td>' +
+    '<td class="num">' + fmtPct(p.memory_percent) + '</td>' +
+    '<td><span class="badge ' + statusCls(p.status) + '">' + esc(p.status || '—') + '</span></td>' +
+    '<td class="ops"><button class="btn btn-sm btn-danger" data-act="kill" data-pid="' + esc(p.pid) + '" data-name="' + esc(p.name) + '">结束</button></td>' +
+    '</tr>').join('');
+  renderPager('procs');
+}
+
+async function loadServices(){
+  try {
+    const res = await authGuard(await fetch('/api/services', { credentials: 'include' }));
+    if (!res.ok) return;
+    const d = await res.json();
+    tableCache.svcs = Array.isArray(d) ? d : (d.services || []);
+    renderSvcRows();
+    setConn(true);
+  } catch (e) { setConn(false); }
+}
+
+function renderSvcRows(){
+  const tb = $('#svc-tbody');
+  if (!tb) return;
+  const { rows, pages, total } = slicePage(tableCache.svcs, 'svcs');
+  if (!rows.length) { tb.innerHTML = '<tr><td colspan="5" class="empty">无服务数据</td></tr>'; return; }
+  tb.innerHTML = rows.map(s => '<tr>' +
+    '<td>' + esc(s.unit) + '</td>' +
+    '<td><span class="badge ' + statusCls(s.active) + '">' + esc(s.active || '—') + '</span></td>' +
+    '<td>' + esc(s.sub || '—') + '</td>' +
+    '<td>' + esc(s.description || '') + '</td>' +
+    '<td class="ops">' +
+    '<button class="btn btn-sm btn-success" data-act="start" data-unit="' + esc(s.unit) + '">启动</button> ' +
+    '<button class="btn btn-sm btn-warn" data-act="restart" data-unit="' + esc(s.unit) + '">重启</button> ' +
+    '<button class="btn btn-sm btn-danger" data-act="stop" data-unit="' + esc(s.unit) + '">停止</button>' +
+    '</td></tr>').join('');
+  renderPager('svcs');
+}
+
+async function loadPorts(){
+  try {
+    const res = await authGuard(await fetch('/api/network/ports', { credentials: 'include' }));
+    if (!res.ok) return;
+    const d = await res.json();
+    tableCache.ports = Array.isArray(d) ? d : (d.ports || []);
+    renderPortRows();
+    setConn(true);
+  } catch (e) { setConn(false); }
+}
+
+function renderPortRows(){
+  const tb = $('#port-tbody');
+  if (!tb) return;
+  const { rows, pages, total } = slicePage(tableCache.ports, 'ports');
+  if (!rows.length) { tb.innerHTML = '<tr><td colspan="4" class="empty">无端口监听数据</td></tr>'; return; }
+  tb.innerHTML = rows.map(p => '<tr>' +
+    '<td>' + esc(p.protocol || '—') + '</td>' +
+    '<td>' + esc(p.local_address || '—') + '</td>' +
+    '<td class="num">' + esc(p.local_port) + '</td>' +
+    '<td>' + esc(p.process || '—') + '</td>' +
+    '</tr>').join('');
+  renderPager('ports');
+}
+
+/* ═══════════ Chart.js 实时曲线 ═══════════ */
+function baseOpts(ylabel, max100){
+  return {
+    animation: false,
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { labels: { boxWidth: 8, boxHeight: 8, padding: 12, font: { size: 11 } } },
+      tooltip: { backgroundColor: '#18233c', borderColor: '#243350', borderWidth: 1, titleColor: '#e2e8f0', bodyColor: '#8fa3c0' }
+    },
+    scales: {
+      x: { ticks: { maxTicksLimit: 8, maxRotation: 0, color: '#8fa3c0' }, grid: { display: false } },
+      y: Object.assign(
+        { beginAtZero: true, ticks: { color: '#8fa3c0', callback: v => max100 ? v + '%' : v } },
+        max100 ? { suggestedMax: 100 } : {}
+      )
+    }
+  };
+}
+function lineDataset(label, color, fill){
+  return {
+    label, data: [], borderColor: color, backgroundColor: fill,
+    fill: !!fill, tension: 0.3, pointRadius: 0, borderWidth: 2
+  };
+}
+function initCharts(){
+  if (typeof Chart === 'undefined') { toast('Chart.js 加载失败，曲线不可用', 'err'); return; }
+  Chart.defaults.color = '#8fa3c0';
+  Chart.defaults.borderColor = 'rgba(143,163,192,0.10)';
+  Chart.defaults.font.family = "-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif";
+  const byteTooltip = { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmtBytes(ctx.parsed.y) + '/s' } };
+  charts.cpu  = new Chart($('#chart-cpu'),  { type: 'line', data: { labels: [], datasets: [lineDataset('CPU %', '#38bdf8', 'rgba(56,189,248,0.12)')] }, options: baseOpts('CPU %', true) });
+  charts.mem  = new Chart($('#chart-mem'),  { type: 'line', data: { labels: [], datasets: [lineDataset('内存 %', '#34d399', 'rgba(52,211,153,0.12)')] }, options: baseOpts('内存 %', true) });
+  charts.net  = new Chart($('#chart-net'),  { type: 'line', data: { labels: [], datasets: [lineDataset('接收', '#38bdf8', null), lineDataset('发送', '#f472b6', null)] }, options: Object.assign(baseOpts('B/s', false), { plugins: { legend: { labels: { boxWidth: 8, boxHeight: 8, padding: 12 } }, tooltip: byteTooltip } }) });
+  charts.disk = new Chart($('#chart-disk'), { type: 'line', data: { labels: [], datasets: [lineDataset('IO', '#fbbf24', 'rgba(251,191,36,0.12)')] }, options: Object.assign(baseOpts('B/s', false), { plugins: { legend: { labels: { boxWidth: 8, boxHeight: 8, padding: 12 } }, tooltip: byteTooltip } }) });
+}
+
+/* ═══════════ 定时器 ═══════════ */
+function startTimers(){
+  stopTimers();
+  timers.metrics   = setInterval(loadMetrics, 2000);            // 指标 2s
+  timers.processes = setInterval(loadProcesses, 5000);          // 进程表 5s
+  timers.hardware  = setInterval(() => { loadHardware(); loadSensors(); }, 10000); // 硬件 10s
+}
+function stopTimers(){
+  Object.keys(timers).forEach(k => { clearInterval(timers[k]); timers[k] = null; });
+}
+
+/* ═══════════ 高危操作：密码确认 → POST ═══════════ */
+let pwdResolver = null;
+function openPwdModal(title){
+  return new Promise(resolve => {
+    pwdResolver = resolve;
+    $('#modal-title').textContent = title;
+    $('#modal-error').textContent = '';
+    $('#modal-password').value = '';
+    $('#action-modal').classList.remove('hidden');
+    setTimeout(() => $('#modal-password').focus(), 50);
+  });
+}
+function closePwdModal(result){
+  if (pwdResolver) { pwdResolver(result); pwdResolver = null; }
+  $('#action-modal').classList.add('hidden');
+}
+
+$('#modal-cancel').addEventListener('click', () => closePwdModal(null));
+$('#modal-confirm').addEventListener('click', () => {
+  const pw = $('#modal-password').value;
+  if (!pw) { $('#modal-error').textContent = '请输入密码'; return; }
+  closePwdModal(pw);
+});
+$('#action-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closePwdModal(null); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#action-modal').classList.contains('hidden')) closePwdModal(null); });
+
+// 事件委托：进程/服务表格内的操作按钮
+function onActionClick(e){
+  const btn = e.target.closest('button[data-act]');
+  if (!btn) return;
+  const act = btn.dataset.act;
+  let title, endpoint;
+  if (act === 'kill') {
+    title = '结束进程 ' + (btn.dataset.pid || '') + '（' + (btn.dataset.name || '') + '）';
+    endpoint = '/api/processes/' + encodeURIComponent(btn.dataset.pid) + '/kill';
+  } else {
+    const labels = { start: '启动', stop: '停止', restart: '重启' };
+    title = labels[act] + '服务 ' + (btn.dataset.unit || '');
+    endpoint = '/api/services/' + encodeURIComponent(btn.dataset.unit) + '/' + act;
+  }
+  openPwdModal(title + '？').then(async pw => {
+    if (pw === null) return;                       // 用户取消
+    try {
+      const res = await authGuard(await fetch(endpoint, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pw })
+      }));
+      if (res.ok) {
+        toast(title + ' 成功', 'ok');
+        if (act === 'kill') loadProcesses(); else loadServices();
+      } else {
+        const d = await res.json().catch(() => ({}));
+        toast(d.detail || (title + ' 失败 (' + res.status + ')'), 'err');
+      }
+    } catch (err) { toast('网络错误：操作失败', 'err'); }
+  });
+}
+$('#proc-tbody').addEventListener('click', onActionClick);
+$('#svc-tbody').addEventListener('click', onActionClick);
+
+/* ═══════════ 启动 ═══════════ */
+document.addEventListener('visibilitychange', () => { if (!document.hidden && authed) loadMetrics(); });
+checkAuth();
+</script>
+</body>
+</html>
