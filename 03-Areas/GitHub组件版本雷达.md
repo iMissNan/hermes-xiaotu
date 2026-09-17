@@ -18,7 +18,7 @@ status: evergreen
 - **其余全部只给建议**：agent 报「建议升/暂缓/不推荐」+理由+回滚路径，**权限所有者点头才动手**；建议升的判定尤其看补丁锚点是否对新版本仍适用（10Router CN 补丁）、sqlite 是否已备份（Homarr）。
 - 每次升级后回填本卡「版本快照」表 + 记一行变更日志（改文件即可，git 提交仍须权限所有者点头）。
 
-## 版本快照（巡检回填，最近核对：2026-09-16）
+## 版本快照（巡检回填，最近核对：2026-09-17）
 
 | 组件 | 血统形态 | 本地 | 上游 | 差距 | 档位 | 详情/升级方法 |
 |---|---|---|---|---|---|---|
@@ -58,7 +58,7 @@ docker run -d --name <容器名> --restart unless-stopped <原端口/卷/env 参
 ```
 
 - **Homarr 实况参数**：`7575:7575`，卷 `~/.local/opt/homarr/{configs,icons}`，env `DB_URL=/appdata/db/db.sqlite`（sqlite 在容器层内——**升级前必须 `docker cp homarr:/appdata/db ./backup` 备份**，这是它归手动档的原因）。
-- **10Router 实况参数**：`20128:20128`，卷 `~/.10router:/app/data` + tailscale bind×2，env 含 `NODE_OPTIONS=--require /app/data/patches/google-oauth-proxy.cjs`（CN 补丁在数据卷里，升级镜像不动补丁，但**大版本后要抽查 Google OAuth 刷新是否仍走代理**）。详见 [[replication/2-10Router-AI网关]]。
+- **10Router 实况参数**：`20128:20128`，卷 `~/.10router:/app/data` + tailscale bind×2，env 含 `NODE_OPTIONS=--require /app/data/patches/google-oauth-proxy.cjs`（CN 补丁在数据卷里，升级镜像不动补丁，但**大版本后要抽查 Google OAuth 刷新是否仍走代理**）。⚠️ **strictProxy 补丁打在容器层（非卷），任何 `docker stop && rm && run` 重建都会把它冲掉**——包括升级会话收尾的最终重建（0917 实锤：0916 升级白天重放 3 处 PATCHED，当晚 20:29 收尾重建又冲掉，次日哨兵才抓到）。铁律：**重建容器必须是最后一动，重放补丁在其后**，重建后必跑 `python3 ~/.hermes/scripts/patch-sentinel.py` 到全绿才算收工。详见 [[replication/2-10Router-AI网关]]。
 
 ### tailscale 升级 SOP（0912 实测修正：二进制不在 GitHub Release，在官方包站）
 
@@ -119,6 +119,8 @@ curl -sf --max-time 10 http://127.0.0.1:9097 >/dev/null && echo OK || { 回滚�
 | 2026-09-16 | 10Router | v1.1.0→v1.1.1（pull 新镜像→rename 旧容器→同参数 run→重放 strict-proxy.cjs 3处 PATCHED→restart）。OAuth 钩子 NODE_OPTIONS 存活。数据对拍 49 连接/13 节点/3 池一致。旧容器删+悬空镜像回收 798MB，新镜像钉 `:1.1.1` 标签，`:1.1.0` 回滚标签 ghcr 仍在 | ✅ chat 实测 my-com1 出字、375 模型、哨兵 6 项全绿 |
 | 2026-09-15 | — | 日检：4 项上游查询失败（sing-box/Homarr/metacubexd/大盘）经值守 agent 走 7894 代理重试全部查明——前三者实为齐平；**大盘 fetch 后实锤落后 6 提交**（usage 计费准确性修复+看板图表升级+依赖安全硬化，雷达 ❓ 漏报转 🔴）；本体落后扩至 846 提交（fix 为主，含 HEIF 图片解码、state.db 只读硬化）；哨兵 6 项指纹全绿；metacubexd 已齐平无需自动更新。无升级动作，建议清单见当日雷达报告 | 📋 等拍板 |
 | 2026-09-16 | — | 日检：5 项落后（sing-box/10Router/大盘/web-ui/本体），Homarr ❓ 查明=GitHub API 对 7894 出口 IP 匿名限流误报，直连重试实为 v1.77.1 齐平；**已给雷达脚本 gh_get 加直连兜底腿（代理腿命中限流自动切直连），复跑 10 项 ❓ 清零**；哨兵 6 项指纹全绿；metacubexd 镜像 09-13≥上游 09-10 无需自动更新；本体落后扩至 1677 提交（未含 v2026.9.14 标签，fix 为主无急用项）。无升级动作，建议清单见当日雷达报告 | 📋 等拍板 |
+| 2026-09-17 | — | 日检：❓ 仅 10Router 一项，走 7894 代理重试 200 查明=**假警报**（本地 1070a8836c3e=上游 v1.1.1，同镜像双标签，齐平）。**哨兵抓到 strictProxy 补丁丢失并已当场重放修复**：state.db 取证实锤=0916 升级会话当晚 20:29 收尾重建容器把白天重放的补丁冲掉（补丁打在容器层非卷，升级会话漏跑哨兵收尾）；重放 3 处 PATCHED→restart→dashboard 200→my-com1 出字实测（z-ai/glm-5.3）→哨兵 6 项全绿。落后 3 项复核：sing-box v1.14.1 仍纯 fix 无安全通告维持暂缓；web-ui 0.7.22（09-16 发，任务计划 MCP+MCP HTTP 别名配对修复+Bridge TCP 回退，有轻量实用项）；大盘 git fetch 实为齐平（雷达 🔴 误报，仅运行时数据文件本地改动）；本体落后 2122 提交（桌面端 revert 波+HERMES_HOME 安全硬化等，无当下急用项）。metacubexd 上游 v1.273.1(09-10)≤镜像@09-13 无需更新 | ✅ 补丁已修复+1 项待拍板 |
+| 2026-09-17 | 10Router | strictProxy 补丁重放（哨兵报警→state.db 取证→docker cp+node 重放 3 处 PATCHED→restart→dashboard 200+chat 实测出字） | ✅ 哨兵 6 项全绿，根因=升级会话收尾重建冲容器层补丁，SOP 已补铁律 |
 
 ## 关联
 
