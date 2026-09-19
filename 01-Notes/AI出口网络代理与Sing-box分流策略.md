@@ -63,6 +63,15 @@ curl -x http://127.0.0.1:7892 https://api.ipify.org
 
 ---
 
+## 4. 免费池子系统（2026-09-20 六笔连落收工）
+
+- **架构拍板**：单入口原则——:9097 原样就地改，:20190 只做 API 引擎（`/api/free/*`、overlay.js）；清单⑨的 `/ui/`+`/clash/` 反代已撤销（commit `1ea27fc`，回滚=revert）。页签唯一形态=MetaCubeXD overlay「免费池」页签。
+- **P5 观察期**：提前收口，M1–M9 不阻塞；日报器+23:55 cron 攒数据；红线常驻即时上报。三源现状：v2rayfree/morpheus 已停用（09-19 11:10 首战实锤），free18-yaml 唯一活源。
+- **运维红线**：`POST /api/free/switch` 是真写（验收禁拿真键探）；state.json 家规 `indent=1`；主配置/cron 动前先报告。
+- 唯一架构基准=白皮书《2026-09-20-free-pool-subsystem-whitepaper.md》（workspace/.hermes/plans/），六笔 commit 链 `04f246e/9d4b85d/d998d01/6a7591d/f81c510/1ea27fc`。
+
+---
+
 ## 🔗 关联索引
 - 上级主索引：[[Home|知识库主索引]]
 - 依赖服务卡：[[02-Projects/10Router-网关系统|10Router 智能网关系统]]
