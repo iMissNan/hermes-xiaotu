@@ -100,3 +100,22 @@
    - 手机 WiFi 代理设置为“自动”，填入 PAC 地址；
    - 访问 `www.google.com` 正常打开；
    - 手机下载测试文件，监控服务器 7892 端口无流量飙升，确认完全走手机本地直连。
+
+---
+
+## 3. 审计补遗（2026-10-01 晚 · 第三方审计定案）
+
+> 本节由独立审计轮补录，修正原稿两处盲点并记录收尾实测。
+
+### 3.1 硬伤一：GEOSITE,cn 天生不含 snssdk 系（已修复）
+- **根因**：上游 v2fly 数据 geolocation-cn 引用 bytedance 标签时带 @-!cn 属性（仅收非中国域名），故 GEOSITE,cn 不含 snssdk.com / zijieapi.com 等国内主域。审计实测 6 小时内 125 条抖音国内域走 MATCH 误出海。
+- **修复**：规则区手工补 DOMAIN-SUFFIX,snssdk.com / zijieapi.com / zjcdn.com → DIRECT（commit b34a7f9，已推 GitHub）。端到端实测 aweme.snssdk.com 经 7892 → using DIRECT（59ms）。
+
+### 3.2 硬伤二：GEOIP,CN,no-resolve 对手机流量结构性失效（定性保留）
+- fake-ip 模式下手机 CONNECT 带纯域名，规则按域名匹配；no-resolve 又禁止解析成 IP —— 域名匹配不到、IP 不许查，两头堵死，该规则对局域网代理设备永不命中。
+- **决策**：保留不删。服务器本机流量（先解析后连）仍受其保护；局域网设备的国内兜底由 DOMAIN-SUFFIX 白名单补位。属规则组合的先天约束，非配置缺陷。
+
+### 3.3 其余收尾记录
+- config.yaml.bak-pre-dnsfix 已删除（版本管理归 git，遵守禁 .bak 铁律）。
+- 热载验证注意：DOMAIN-SUFFIX 纯文本规则不走 GeoSite 加载器、无专属 journalctl 日志行，验证须查 :9090/rules API（运行时 93 条含新规则）。
+- 探活矩阵 6 项全绿；手机已于当日 16:29 切换 PAC，直连流量不经服务器符合预期。
