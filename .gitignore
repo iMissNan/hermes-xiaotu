@@ -45,3 +45,4 @@ _local/
 
 # 复刻体系例外：MarsTV 源码包为有意入库的自研资产（1.7M）
 !assets/martv-source.tar.gz
+**/__pycache__/**

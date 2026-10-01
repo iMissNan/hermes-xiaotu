@@ -39,6 +39,7 @@ tags: [index, moc, home]
 ## 🌟 核心长青沉淀与运维 SOP (Core Evergreen Notes)
 
 - 🌐 **AI 出口与风控**：[[01-Notes/AI出口网络代理与Sing-box分流策略|AI 出口网络代理与 Sing-box 分流策略]]
+- 🚀 **版本雷达与安全升级总管**：[[01-Notes/skills/self-hosted-app-upgrade/README|自托管版本雷达与安全升级总管 (v2.2.0)]]
 - 🧠 **记忆引擎架构**：[[01-Notes/aiduMEM全离线记忆引擎部署与排障SOP|aiduMEM 全离线记忆引擎部署与排障 SOP]]
 - 🎬 **家庭娱乐运维**：[[01-Notes/云影院与家庭多媒体系统运维规范|云影院与家庭多媒体系统运维规范]]
 - 🐙 **开源协作规约**：[[01-Notes/Git双平台发布与轻量Hook工程规约|Git 双平台发布与轻量 Hook 工程规约]]

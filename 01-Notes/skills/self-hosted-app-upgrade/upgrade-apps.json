@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.1.0",
+  "updated_at": "2026-10-02T05:45:00+08:00",
+  "topology_ranks": {
+    "infra": 1,
+    "gateway": 2,
+    "service": 3,
+    "dashboard": 4
+  },
+  "apps": {
+    "10router": {
+      "name": "10Router AI 网关",
+      "provider": "git-source",
+      "tier": "gateway",
+      "aliases": ["10r", "tenrouter", "10-router", "ai网关", "路由网关"],
+      "workdir": "/home/linxuan/apps/10router",
+      "repo": "https://github.com/techysy/10router.git",
+      "branch": "main",
+      "service": "10router.service",
+      "systemd_level": "user",
+      "port": 20128,
+      "low_cpu_armor": true,
+      "patch_dir": "/home/linxuan/.10router-bare-data/patches",
+      "patch_mirror_dir": "/home/linxuan/.local-patches/10router",
+      "preflight": {
+        "min_disk_free_mb": 2048,
+        "check_port": 20128
+      },
+      "verify": {
+        "health_url": "http://127.0.0.1:20128/api/health",
+        "assert_json": { "ok": true, "driver": "node:sqlite" }
+      }
+    },
+    "creditdaddy": {
+      "name": "CreditDaddy 编程资产中枢",
+      "provider": "git-source",
+      "tier": "service",
+      "aliases": ["cd", "cdaddy", "credit-daddy", "积分管家", "资产中枢"],
+      "workdir": "/opt/creditdaddy",
+      "repo": "https://github.com/techysy/CreditDaddy.git",
+      "branch": "main",
+      "service": "creditdaddy.service",
+      "systemd_level": "system",
+      "port": 47860,
+      "patch_dir": "/opt/creditdaddy/local-patches",
+      "patch_mirror_dir": "/home/linxuan/.local-patches/creditdaddy",
+      "test_cmd": "npm test --prefix /opt/creditdaddy",
+      "preflight": {
+        "min_disk_free_mb": 2048,
+        "check_port": 47860
+      },
+      "verify": {
+        "status_url": "http://127.0.0.1:47860/api/status",
+        "assert_json": { "ok": true },
+        "whitelist_host": "home.nanshark.ccwu.cc:47860",
+        "forbidden_host": "evil.attacker.com:47860"
+      }
+    },
+    "mihomo": {
+      "name": "Mihomo 核心代理",
+      "provider": "binary-release",
+      "tier": "infra",
+      "aliases": ["clash", "内核代理", "mihomo内核", "代理内核"],
+      "bin_path": "/opt/mihomo/mihomo",
+      "service": "mihomo.service",
+      "systemd_level": "system",
+      "port": 9090,
+      "verify": {
+        "ui_url": "http://127.0.0.1:9090/ui/",
+        "traffic_port": 7892
+      }
+    },
+    "tailscale": {
+      "name": "Tailscale 安全组网",
+      "provider": "binary-release",
+      "tier": "infra",
+      "aliases": ["ts", "异地组网", "tailscale客户端"],
+      "bin_path": "/usr/bin/tailscale",
+      "official_source": "pkgs.tailscale.com/stable/",
+      "service": "tailscaled.service",
+      "systemd_level": "system",
+      "verify": {
+        "status_cmd": "tailscale status"
+      }
+    },
+    "martv": {
+      "name": "Mars TV 云影院",
+      "provider": "git-source",
+      "tier": "service",
+      "aliases": ["marstv", "云影院", "火星影视", "影视站"],
+      "workdir": "/opt/martv",
+      "service": "martv.service",
+      "systemd_level": "system",
+      "port": 8082,
+      "verify": {
+        "health_url": "http://127.0.0.1:8082/api/health",
+        "assert_json": { "status": "ok" }
+      }
+    },
+    "homarr": {
+      "name": "Homarr 统一导航大盘",
+      "provider": "docker-image",
+      "tier": "dashboard",
+      "aliases": ["导航页", "仪表盘", "大盘"],
+      "compose_dir": "/home/linxuan/data/homarr",
+      "container_name": "homarr",
+      "port": 7575,
+      "verify": {
+        "health_url": "http://127.0.0.1:7575/"
+      }
+    },
+    "vaultwarden": {
+      "name": "Vaultwarden 密码台账",
+      "provider": "docker-image",
+      "tier": "infra",
+      "aliases": ["vw", "密码库", "密码箱", "bitwarden"],
+      "compose_dir": "/home/linxuan/data/vaultwarden",
+      "container_name": "vaultwarden",
+      "port": 20130,
+      "verify": {
+        "health_url": "http://127.0.0.1:20130/alive"
+      }
+    },
+    "aidumem": {
+      "name": "aiduMEM 记忆中枢",
+      "provider": "git-source",
+      "tier": "service",
+      "aliases": ["mem", "记忆库", "aidumei"],
+      "workdir": "/home/linxuan/apps/aidumem",
+      "service": "aidumem.service",
+      "systemd_level": "system",
+      "port": 8767,
+      "verify": {
+        "health_url": "http://127.0.0.1:8767/health"
+      }
+    }
+  }
+}
