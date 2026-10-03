@@ -1,8 +1,8 @@
-# free-model-radar 供应商名录与已知规约
-# 遵循【穿透三铁律】：
-# 1. 严禁使用 Combo 别名（如 AMD, qoder, cline）充当模型，必须穿透到真实原子模型 ID；
-# 2. 国服与国际服严格物理隔离（qoder-cn vs qoder）；
-# 3. 规约优先：已声明 context_length 的模型在 L2 阶段仅做 1 发最小抽样。
+# free-model-radar v3.0 供应商名录与一手前哨探测规约
+# 遵循【独立双轨前哨三铁律】：
+# 1. 彻底剥离网关本地旧账（禁止从 10Router 源码/本地注册表回退读取模型）；
+# 2. 探针 100% 直连官方一手源（NPM 生产发版、动态推荐 API、官方文档活动站）；
+# 3. 国服与国际服严格物理隔离（workbuddy-cn vs workbuddy, qoder-cn vs qoder）。
 
 defaults:
   gateway_url: "http://127.0.0.1:20128"
@@ -11,88 +11,18 @@ defaults:
   history_retention_days: 30
 
 vendors:
-  amd:
-    vendor_id: "amd"
-    name: "AMD Developer Cloud"
-    doc_url: "https://developer.amd.com"
-    events_url: "https://developer.amd.com/models"
-    api_endpoint: "https://api.amd.com/v1/models"
-    stream_only: false
-    models:
-      amd/Qwen3.8-Flash-Next:
-        model_id: "amd/Qwen3.8-Flash-Next"
-        stream_only: false
-        known_specs:
-          context_length: 128000
-          rpm_limit: 10
-          pricing: "free"
-      amd/DeepSeek-V4-Flash:
-        model_id: "amd/DeepSeek-V4-Flash"
-        stream_only: false
-        known_specs:
-          context_length: 65536
-          rpm_limit: 10
-          pricing: "free"
-      amd/DeepSeek-V4-Flash-Vision-Exp:
-        model_id: "amd/DeepSeek-V4-Flash-Vision-Exp"
-        stream_only: false
-        known_specs:
-          context_length: 65536
-          rpm_limit: 10
-          pricing: "free"
-
-  qoder-cn:
-    vendor_id: "qoder-cn"
-    name: "Qoder 国服 (CN)"
-    doc_url: "https://docs.qoder.com/zh"
-    events_url: "https://docs.qoder.com/zh/cli/model"
-    api_endpoint: "https://api.qoder.cn/v1/models"
-    stream_only: false
-    models:
-      qdc/qfmodel:
-        model_id: "qdc/qfmodel"
-        stream_only: false
-        known_specs:
-          context_length: 128000
-          rpm_limit: 20
-          pricing: "free"
-      qdc/qmodel_38max:
-        model_id: "qdc/qmodel_38max"
-        stream_only: false
-        known_specs:
-          context_length: 128000
-          rpm_limit: 10
-          pricing: "free"
-
-  qoder:
-    vendor_id: "qoder"
-    name: "Qoder 国际服 (Global)"
-    doc_url: "https://docs.qoder.com/zh"
-    events_url: "https://docs.qoder.com/zh/cli/model"
-    api_endpoint: "https://api.qoder.com/v1/models"
-    stream_only: false
-    models:
-      qd/qfmodel:
-        model_id: "qd/qfmodel"
-        stream_only: false
-        known_specs:
-          context_length: 128000
-          rpm_limit: 20
-          pricing: "free"
-      qd/qmodel_38max:
-        model_id: "qd/qmodel_38max"
-        stream_only: false
-        known_specs:
-          context_length: 128000
-          rpm_limit: 10
-          pricing: "free"
-
   workbuddy-cn:
     vendor_id: "workbuddy-cn"
     name: "WorkBuddy 国服 (CN)"
-    doc_url: "https://www.codebuddy.cn/docs/ide/"
-    events_url: "https://www.codebuddy.cn/docs/ide/Support/Troubleshooting"
-    api_endpoint: "https://api.codebuddy.cn/v1/models"
+    doc_url: "https://www.codebuddy.cn/docs/cli/models"
+    discovery:
+      type: "package_introspect"
+      package_name: "@tencent-ai/codebuddy-code"
+      registry_url: "https://registry.npmmirror.com/@tencent-ai/codebuddy-code/latest"
+      fallback_doc_url: "https://www.codebuddy.cn/docs/cli/models"
+    gateway_binding:
+      alias_prefixes: ["cbcn"]
+      provider_names: ["workbuddy-cn", "codebuddy-cn"]
     stream_only: false
     models:
       cbcn/hy4-preview:
@@ -121,8 +51,14 @@ vendors:
     vendor_id: "workbuddy"
     name: "WorkBuddy 国际服 (Intl)"
     doc_url: "https://codebuddy.ai"
-    events_url: "https://codebuddy.ai/events"
-    api_endpoint: "https://api.codebuddy.ai/v1/models"
+    discovery:
+      type: "package_introspect"
+      package_name: "@workbuddy/cli-vnext"
+      registry_url: "https://registry.npmmirror.com/@workbuddy/cli-vnext/latest"
+      fallback_doc_url: "https://codebuddy.ai"
+    gateway_binding:
+      alias_prefixes: ["cbai"]
+      provider_names: ["workbuddy", "codebuddy-intl"]
     stream_only: false
     models:
       cbai/deepseek-v4.1-flash:
@@ -140,12 +76,75 @@ vendors:
           rpm_limit: 15
           pricing: "free"
 
+  qoder-cn:
+    vendor_id: "qoder-cn"
+    name: "Qoder 国服 (CN)"
+    doc_url: "https://docs.qoder.cn"
+    events_url: "https://docs.qoder.cn/events/flashoffer"
+    discovery:
+      type: "doc_table"
+      url: "https://docs.qoder.cn/cli/model"
+      events_url: "https://docs.qoder.cn/events/flashoffer"
+    gateway_binding:
+      alias_prefixes: ["qdc"]
+      provider_names: ["qoder-cn"]
+    stream_only: false
+    models:
+      qdc/qfmodel:
+        model_id: "qdc/qfmodel"
+        stream_only: false
+        known_specs:
+          context_length: 128000
+          rpm_limit: 20
+          pricing: "free"
+      qdc/qmodel_38max:
+        model_id: "qdc/qmodel_38max"
+        stream_only: false
+        known_specs:
+          context_length: 128000
+          rpm_limit: 10
+          pricing: "free"
+
+  qoder:
+    vendor_id: "qoder"
+    name: "Qoder 国际服 (Global)"
+    doc_url: "https://docs.qoder.com/zh"
+    events_url: "https://docs.qoder.com/zh/events/flashoffer"
+    discovery:
+      type: "doc_table"
+      url: "https://docs.qoder.com/zh/cli/model"
+      events_url: "https://docs.qoder.com/zh/events/flashoffer"
+    gateway_binding:
+      alias_prefixes: ["qd"]
+      provider_names: ["qoder"]
+    stream_only: false
+    models:
+      qd/qfmodel:
+        model_id: "qd/qfmodel"
+        stream_only: false
+        known_specs:
+          context_length: 128000
+          rpm_limit: 20
+          pricing: "free"
+      qd/qmodel_38max:
+        model_id: "qd/qmodel_38max"
+        stream_only: false
+        known_specs:
+          context_length: 128000
+          rpm_limit: 10
+          pricing: "free"
+
   cline:
     vendor_id: "cline"
     name: "Cline Free Tier"
     doc_url: "https://docs.cline.bot"
-    events_url: "https://api.cline.bot/api/v1/ai/cline/recommended-models"
-    api_endpoint: "https://api.cline.bot/api/v1/ai/cline/recommended-models"
+    discovery:
+      type: "dynamic_shelf"
+      url: "https://api.cline.bot/api/v1/ai/cline/recommended-models"
+      openrouter_free: true
+    gateway_binding:
+      alias_prefixes: ["cl", "cline"]
+      provider_names: ["cline"]
     stream_only: true
     models:
       cl/stealth/space-bunny-alpha:
@@ -205,12 +204,52 @@ vendors:
           rpm_limit: 10
           pricing: "promotional_credits"
 
+  amd:
+    vendor_id: "amd"
+    name: "AMD Developer Cloud"
+    doc_url: "https://developer.amd.com"
+    events_url: "https://developer.amd.com/models"
+    discovery:
+      type: "openapi"
+      url: "https://api.amd.com/v1/models"
+    gateway_binding:
+      alias_prefixes: ["amd"]
+      provider_names: ["amd"]
+    stream_only: false
+    models:
+      amd/Qwen3.8-Flash-Next:
+        model_id: "amd/Qwen3.8-Flash-Next"
+        stream_only: false
+        known_specs:
+          context_length: 128000
+          rpm_limit: 10
+          pricing: "free"
+      amd/DeepSeek-V4-Flash:
+        model_id: "amd/DeepSeek-V4-Flash"
+        stream_only: false
+        known_specs:
+          context_length: 65536
+          rpm_limit: 10
+          pricing: "free"
+      amd/DeepSeek-V4-Flash-Vision-Exp:
+        model_id: "amd/DeepSeek-V4-Flash-Vision-Exp"
+        stream_only: false
+        known_specs:
+          context_length: 65536
+          rpm_limit: 10
+          pricing: "free"
+
   nvidia:
     vendor_id: "nvidia"
     name: "NVIDIA NIM"
     doc_url: "https://build.nvidia.com"
     events_url: "https://build.nvidia.com/explore/discover"
-    api_endpoint: "https://integrate.api.nvidia.com/v1/models"
+    discovery:
+      type: "openapi"
+      url: "https://integrate.api.nvidia.com/v1/models"
+    gateway_binding:
+      alias_prefixes: ["nvidia"]
+      provider_names: ["nvidia"]
     stream_only: false
     models:
       nvidia/z-ai/glm-5.3-flash:

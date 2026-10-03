@@ -1,23 +1,27 @@
 ---
 name: free-model-radar
 description: 10Router 免费模型常态化雷达巡检、按规校验、深测排位与半自动换血审批。
-version: "2.0.0"
+version: "3.0.0"
 ---
 
-# free-model-radar（免费模型雷达）
+# free-model-radar（免费模型雷达 v3.0 独立双轨前哨）
 
 本技能实现 10Router 免费模型的常态化自动巡检、按规探查、前哨对拍、审批换血，达成「常用、能用、好用、一直用」。
 
 ## 核心原则与模型准入规范（穿透铁律）
 
 ### 0. 【Rule 0】前哨独立发现与强制网关对拍铁律（最高铁律，不可妥协）
-- **致命根因防范**：严禁只对接 10Router 网关配置或官网静态营销页（例如 docs.cline.bot 等静态文档），静态网页永远慢人一步且极易被 404/重定向误导。
-- **动态货架机制破案**：Cline 等主流 AI 编码工具的免费模型并非公开展示在静态网页上，而是由客户端服务端 API 动态下发的（如 `https://api.cline.bot/api/v1/ai/cline/recommended-models`），属于**“IDE/CLI 客户端动态货架模型”**。
-- **强制一手前哨发现**：雷达前哨必须配置本地代理（`http://127.0.0.1:7892`）直连官方客户端推荐接口，一手探测当期真正 free 货架与 OpenRouter `:free` 开放免费池。
-- **强制三差集硬核对拍**：一手发现结果必须与 10Router 现网（`kv` 表别名映射 + `providerConnections.modelLock`）进行硬核对拍，严格产出三大差集：
-  1. `dual_matched`（双向对齐）：官方货架当期在售，且 10Router 网关已挂载生效；
-  2. `newly_discovered`（外部新出、网关漏配）：官方动态一手新出，但 10Router 网关尚未配置，触发补录告警；
-  3. `ghost_mounted`（外部已下架、网关幽灵挂载）：官方动态货架已下线除名，但 10Router 网关仍残留挂载，触发剔除建议。
+- **彻底剥离网关旧账依赖**：严禁从 10Router 本地源码/注册表目录（如 `/open-sse/...`）回退读取模型旧账！雷达是走在行业最前沿的前哨侦察兵，必须 100% 独立于 10Router，直接插向厂商一手源（官方 NPM 发版、动态推荐 API、规约文档与活动站、OpenAPI 端点），先于网关感知新货，再与网关差集对拍反向赋能。
+- **四大外部一手探测规约体系**：全量供应商通过 `config/vendors.yaml` 的 `discovery` 与 `gateway_binding` 元数据驱动探测：
+  1. `package_introspect`（NPM 发版自省）：直连官方 NPM registry API，抓取最新发布版本（`version`）与时间（`publish_time`），流式解包提取生产包内核心模型清单（如 `@tencent-ai/codebuddy-code`、`@workbuddy/cli-vnext`），支持零倍率/免额模型提取与 `fallback_doc_url` 安全降级；
+  2. `dynamic_shelf`（动态货架）：直连客户端推荐 API（如 Cline，`https://api.cline.bot/api/v1/ai/cline/recommended-models`），走代理（`http://127.0.0.1:7892`），联动 OpenRouter `:free` 开放免费池；
+  3. `doc_table`（规约表格/列表与活动嗅探）：解析官方文档表格/列表原子模型（如 Qwen、DeepSeek、GLM、Kimi、MiniMax 等）、规约线索（200K、400K、1M 等）与 events_url 限免/0 Credits 政策（如 Qoder 国服与国际服）；
+  4. `openapi`（OpenAI 兼容端点）：直连 `/v1/models` 获取最新模型名录（如 NVIDIA NIM、AMD 等）。
+- **纯净网关硬核差集对拍与账号状态透视**：一手发现结果仅与 10Router 现网（`kv` 表路由映射 + `providerConnections.modelLock` + 实时 `/v1/models` 在线挂载）进行纯净差集对拍，并透视底层账号激活状态：
+  1. `dual_matched`（双向对齐）：官方货架当期在售，且 10Router 网关已装配生效；
+  2. `newly_discovered`（外部新出、网关漏配）：官方一手新出，但 10Router 网关尚未配置，触发补录告警与前缀挂载建议；
+  3. `ghost_mounted`（外部已下架、网关幽灵挂载）：官方动态货架已下线除名，但 10Router 网关仍残留挂载，触发剔除建议；
+  4. `账号激活透视`：实时统计底层登记账号数与活跃数，当所有账号均未激活时触发 `🔴 全未激活预警`（防范 404 No active credentials 误判为模型下架）。
 - **执行硬性约束**：该步骤不可省略、简化和跳过！
 
 ### 1. 永久免费 vs 促销额度池（HTTP 402 vs 404 严格区分）
@@ -34,9 +38,11 @@ version: "2.0.0"
 
 ### 3. 供应商服区（Region）物理隔离准则
 - 凡存在“国服（CN）”与“国际服（Global/Intl）”之分的供应商，**必须在供应商 ID、文档入口与模型前缀上强制物理分流**：
-  - **Qoder 国服**：ID 锁定为 `qoder-cn`，官方入口 `qoder.cn`，网关端点前缀 `qdc/`（如 `qdc/qfmodel`, `qdc/qmodel_38max`）；
-  - **Qoder 国际服**：ID 锁定为 `qoder`，官方入口 `qoder.sh` / `qoder.com`，网关端点前缀 `qd/`（如 `qd/qfmodel`, `qd/qmodel_38max`）。
-- **禁止项**：严禁使用模糊的“qoder”统称，报表和台账必须明确标注 `【Qoder 国服】` 或 `【Qoder 国际服】`。同样适用于 CodeBuddy 等多服区供应商。
+  - **WorkBuddy 国服**：ID 锁定为 `workbuddy-cn`，官方 NPM `@tencent-ai/codebuddy-code`，网关端点前缀 `cbcn/`；
+  - **WorkBuddy 国际服**：ID 锁定为 `workbuddy`，官方 NPM `@workbuddy/cli-vnext`，网关端点前缀 `cbai/`；
+  - **Qoder 国服**：ID 锁定为 `qoder-cn`，官方入口 `docs.qoder.cn`，网关端点前缀 `qdc/`（如 `qdc/qfmodel`, `qdc/qmodel_38max`）；
+  - **Qoder 国际服**：ID 锁定为 `qoder`，官方入口 `docs.qoder.com/zh`，网关端点前缀 `qd/`（如 `qd/qfmodel`, `qd/qmodel_38max`）。
+- **禁止项**：严禁使用模糊的“qoder”或“workbuddy”统称，报表和台账必须明确标注服区。
 
 ### 4. 规约优先（Specification First）与测试分层
 - 若 `config/vendors.yaml` 中某个模型已注明官方参数（如 `context_length: 128000`），L2 测试仅做最小抽样核准（1发验证），严禁盲发 32K/131K 探测包烧光配额；
@@ -51,10 +57,10 @@ version: "2.0.0"
 ## 四环联动探查流水线（do_investigate）
 
 在执行 `fm查 <供应商>` 时，完整触发四环联动流水线：
-1. 📡 **环 1 · 官方客户端动态货架一手发现**：直连官方客户端推荐接口，提取当期 real free 货架与开放免费池；
-2. 🔍 **环 2 · 10Router 现网硬核差集对拍**：计算 Dual Matched（双向匹配）、Newly Discovered（新发现漏配）、Ghost Mounted（网关幽灵挂载）；
+1. 📡 **环 1 · 官方一手动态前哨探查**：标明一手数据源（如 `官方 NPM 生产发版 (v2.161.1 · 发布于 2026-10-02)`、`官方动态推荐接口` 或 `官方规约文档与活动站`），展示提取出的模型清单与限免政策；
+2. 🔍 **环 2 · 10Router 现网硬核差集对拍**：透视底层账号激活状态，计算 Dual Matched（双向匹配）、Newly Discovered（新发现漏配）、Ghost Mounted（网关幽灵挂载）；
 3. ⚡ **环 3 · 现场真流量实测与入库快照**：现场对原子模型发包打流，精准识别 `🟢 稳活 (200)`、`🟡 额度尽 (402)`、`🔴 下架 (404)`、`🟡 限流 (429)` 与超时；
-4. 💡 **环 4 · 运维决策与换血指引**：针对幽灵挂载给出剔除建议，针对新发现给出补录建议，并提供一键换血指令。
+4. 💡 **环 4 · 运维决策与换血指引**：针对幽灵挂载给出剔除建议，针对新发现漏配给出挂载补录建议，并提供一键换血指令。
 
 ## 目录结构
 
@@ -62,7 +68,7 @@ version: "2.0.0"
 free-model-radar/
 ├── SKILL.md                  # 技能正本与操作指引（含 Rule 0 与四环规范）
 ├── config/
-│   └── vendors.yaml          # 供应商花名册、已知规约与端点配置
+│   └── vendors.yaml          # 供应商花名册、独立外部探测规约与网关绑定配置
 ├── scripts/
 │   ├── run.py                # 主控制入口（CLI 调度与四环流水线落地）
 │   ├── crawler.py            # 前哨独立发现引擎与 10Router 差集对拍器

@@ -35,6 +35,7 @@ from crawler import (
     get_router_key,
     sniffer_api_models,
     sniffer_official_doc,
+    sniff_vendor_shelf,
     sniff_client_shelf,
     cross_check_gateway
 )
@@ -340,52 +341,85 @@ def do_investigate(config, vendor=None, model=None):
         print(f"#### 🏢 [{v_key}] {v_info.get('name', v_key)}{stream_tag}\n")
 
         # 环 1：📡 前哨一手动态货架发现
-        shelf_res = sniff_client_shelf(v_key)
+        shelf_res = sniff_vendor_shelf(v_info)
         ext_free = shelf_res.get("free_models", [])
         ext_promotional = shelf_res.get("promotional_models", [])
         or_free = shelf_res.get("openrouter_free", [])
+        disc_type = shelf_res.get("discovery_type", "unknown")
 
+        # 环 2：🔍 10Router 现网硬核差集对拍
+        candidate_ext = list(ext_free)
+        if v_key == "cline":
+            candidate_ext.extend(["qwen/qwen3.8-27b:free", "poolside/laguna-s-2.1:free"])
+
+        gateway_binding = v_info.get("gateway_binding")
+        cc = cross_check_gateway(v_key, candidate_ext, router_db, gateway_binding=gateway_binding)
+
+        print("##### 📡 环 1 · 官方一手动态前哨探查")
         if shelf_res.get("ok"):
-            print("##### 📡 环 1 · 官方客户端动态货架一手发现")
-            free_preview = ", ".join([f"`{m}`" for m in ext_free]) if ext_free else "无"
-            print(f"- 🟢 **当期官方 Free 货架**: {free_preview} (共 {len(ext_free)} 款)")
+            # 标明一手探测源
+            if disc_type == "package_introspect":
+                pkg_ver = shelf_res.get("version") or "unknown"
+                pub_time = shelf_res.get("publish_time") or "未知"
+                print(f"- 📦 **官方一手源**: NPM 生产发版 (`v{pkg_ver}` · 发布于 {pub_time})")
+            elif disc_type == "dynamic_shelf":
+                print(f"- 🌐 **官方一手源**: 官方动态推荐接口 (`dynamic_shelf`)")
+            elif disc_type == "doc_table":
+                print(f"- 📄 **官方一手源**: 官方规约文档与活动站 (`doc_table`)")
+            elif disc_type == "openapi":
+                print(f"- 🔌 **官方一手源**: 官方 OpenAPI /v1/models 接口")
+            else:
+                print(f"- 📡 **官方一手源**: 官方文档页面探测 (`{disc_type}`)")
+
+            if ext_free:
+                free_preview = ", ".join([f"`{m}`" for m in ext_free[:8]])
+                suffix = f"... (共 {len(ext_free)} 款)" if len(ext_free) > 8 else f" (共 {len(ext_free)} 款)"
+                print(f"- 🟢 **官方当期货架/模型清单**: {free_preview}{suffix}")
+            else:
+                print(f"- 🟢 **官方当期货架/模型清单**: 暂未枚举到独立原子模型")
+
             if or_free:
                 or_preview = ", ".join([f"`{m}`" for m in or_free[:4]])
                 print(f"- 🌐 **OpenRouter 开放免费池**: {or_preview}... (共 {len(or_free)} 款)")
             if ext_promotional:
                 promo_sample = ", ".join([f"`{m}`" for m in ext_promotional[:3]])
                 print(f"- 🏷️ **促销体验/体验额度池**: {promo_sample}... (说明：须账号带体验余额，老账号额度用尽报 HTTP 402)")
+            if shelf_res.get("events_summary"):
+                events_str = "；".join(shelf_res["events_summary"][:3])
+                print(f"- 🎁 **官方限免/活动政策**: {events_str}")
+            if shelf_res.get("context_hints"):
+                print(f"- 📏 **官方规约规格线索**: 上下文 " + ", ".join(shelf_res["context_hints"]))
             print()
         else:
-            # 官网页面回退
-            doc_sniff = sniffer_official_doc(events_url or doc_url)
+            err_msg = ", ".join(shelf_res.get("errors", [])) or "未知探测错误"
             doc_link_str = f"[{doc_url}]({doc_url})" if doc_url.startswith("http") else doc_url
-            if doc_sniff.get("ok"):
-                hints = []
-                if doc_sniff.get("context_hints"):
-                    hints.append("上下文: " + ", ".join(doc_sniff["context_hints"][:3]))
-                if doc_sniff.get("pricing_hints"):
-                    hints.append("价格政策: " + ", ".join(doc_sniff["pricing_hints"][:3]))
-                hint_str = " (" + " | ".join(hints) + ")" if hints else ""
-                print(f"##### 📡 环 1 · 官方入口情报嗅探\n- 🌐 **官网入口**: {doc_link_str} · HTTP 200{hint_str}\n")
-            else:
-                err_msg = doc_sniff.get("error") or doc_sniff.get("reason", "未知")
-                print(f"##### 📡 环 1 · 官方入口情报嗅探\n- 🌐 **官网入口**: {doc_link_str} · 异常: `{err_msg}`\n")
-
-        # 环 2：🔍 10Router 现网硬核差集对拍
-        # 外部目标候选池 = 官方当期货架 + 常用开放免额模型
-        candidate_ext = list(ext_free)
-        if v_key == "cline":
-            candidate_ext.extend(["qwen/qwen3.8-27b:free", "poolside/laguna-s-2.1:free"])
-
-        cc = cross_check_gateway(v_key, candidate_ext, router_db)
+            print(f"- 🌐 **官方入口**: {doc_link_str} · 前哨探测异常: `{err_msg}`\n")
         print("##### 🔍 环 2 · 10Router 现网硬核差集对拍")
         if "error" in cc:
             print(f"- ⚠️ **网关对拍失败**: {cc['error']}\n")
         else:
-            dm_str = ", ".join([f"`{m}`" for m in cc["dual_matched"]]) if cc["dual_matched"] else "无"
-            nd_str = ", ".join([f"`{m}`" for m in cc["newly_discovered"]]) if cc["newly_discovered"] else "无（现网已完整覆盖）"
-            gh_str = ", ".join([f"`{m}`" for m in cc["ghost_mounted"]]) if cc["ghost_mounted"] else "无（无残留幽灵）"
+            # 底层账号状态
+            tot_acc = cc.get("total_accounts", 0)
+            act_acc = cc.get("active_accounts", 0)
+            if cc.get("warning_no_active"):
+                acc_status_str = f"🔴 **全未激活预警**（登记 {tot_acc} 个账号，活跃 0 个！所有请求将报 404 No active credentials）"
+            elif tot_acc > 0:
+                acc_status_str = f"🟢 **正常**（登记 {tot_acc} 个账号，活跃 {act_acc} 个）"
+            else:
+                acc_status_str = "⚪ 未在 10Router 登记任何该供应商连接"
+            print(f"- 👥 **底层账号激活状态**: {acc_status_str}")
+
+            dm_str = ", ".join([f"`{m}`" for m in cc["dual_matched"][:8]]) if cc["dual_matched"] else "无"
+            if len(cc["dual_matched"]) > 8:
+                dm_str += f"... (共 {len(cc['dual_matched'])} 款)"
+
+            nd_str = ", ".join([f"`{m}`" for m in cc["newly_discovered"][:8]]) if cc["newly_discovered"] else "无（现网已完整覆盖）"
+            if len(cc["newly_discovered"]) > 8:
+                nd_str += f"... (共 {len(cc['newly_discovered'])} 款)"
+
+            gh_str = ", ".join([f"`{m}`" for m in cc["ghost_mounted"][:6]]) if cc["ghost_mounted"] else "无（无残留幽灵）"
+            if len(cc["ghost_mounted"]) > 6:
+                gh_str += f"... (共 {len(cc['ghost_mounted'])} 款)"
 
             print(f"- 🤝 **双向匹配 (Dual Matched)**: {dm_str}")
             print(f"- 🆕 **外部新发现漏配 (Newly Discovered)**: {nd_str}")
@@ -443,12 +477,15 @@ def do_investigate(config, vendor=None, model=None):
         # 环 4：💡 决策与换血建议
         print("\n##### 💡 环 4 · 运维决策与换血指引")
         advice_list = []
+        if cc.get("warning_no_active"):
+            advice_list.append(f"【严重风险】该供应商下登记的 {cc.get('total_accounts')} 个账号全部处于未激活/未登录状态，所有模型请求均会报 404 No active credentials，请先在 10Router 激活账号")
         if cc.get("ghost_mounted"):
             ghost_names = [f"`{m}`" for m in cc["ghost_mounted"][:4]]
             advice_list.append(f"发现 {len(cc['ghost_mounted'])} 个网关幽灵模型（如 {', '.join(ghost_names)}），官方当期已下架，建议在网关剔除或下线")
         if cc.get("newly_discovered"):
-            new_names = [f"`{m}`" for m in cc["newly_discovered"]]
-            advice_list.append(f"前哨嗅探到新上架模型 {', '.join(new_names)}，建议及时补录至 10Router 对应 Provider 映射")
+            new_names = [f"`{m}`" for m in cc["newly_discovered"][:4]]
+            alias_pfx = gateway_binding.get("alias_prefixes", [v_key])[0] if gateway_binding else v_key
+            advice_list.append(f"前哨嗅探到新上架/新发现模型 {', '.join(new_names)} 等共 {len(cc['newly_discovered'])} 款，建议及时补录至 10Router 网关（前缀如 `{alias_pfx}/`）")
         if not advice_list:
             advice_list.append("外部货架与 10Router 网关挂载高度对齐，无漏配与幽灵模型")
 
@@ -722,7 +759,7 @@ def do_apply(config, combo="yangmao", dry_run=False):
 def main():
     parser = argparse.ArgumentParser(description="free-model-radar 免费模型雷达调度入口")
     parser.add_argument("--mode", choices=[
-        "heartbeat", "benchmark", "crawl", "advise", "query", "active", "top", "add-vendor", "remove-vendor", "apply", "help"
+        "heartbeat", "benchmark", "crawl", "advise", "query", "investigate", "active", "top", "add-vendor", "remove-vendor", "apply", "help"
     ], required=True, help="运行模式")
     parser.add_argument("--vendor", help="指定供应商 (如 cline, qoder-cn, nvidia, amd)")
     parser.add_argument("--model", help="指定模型 ID (如 cline, qoder, nvidia/z-ai/glm-5.3-flash)")
@@ -736,8 +773,12 @@ def main():
     args = parser.parse_args()
     config = load_config(args.config) if args.config else load_config()
 
-    if args.mode == "query":
-        success = do_query(config, vendor=args.vendor, model=args.model)
+    if args.mode in ("query", "investigate"):
+        # 当指定供应商时触发四环前哨探查与对拍；若未指定则输出模型大盘规约快照
+        if args.vendor or args.mode == "investigate":
+            success = do_investigate(config, vendor=args.vendor, model=args.model)
+        else:
+            success = do_query(config, vendor=args.vendor, model=args.model)
         sys.exit(0 if success else 1)
 
     elif args.mode == "active":

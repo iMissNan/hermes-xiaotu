@@ -108,6 +108,13 @@ def parse_fm_command(cmd_text: str):
     # 查系列
     if re.match(r"^(查询|查|list|status|ls)\b", rest, re.I) or rest.startswith(("查询", "查", "list", "status", "ls")):
         sub = re.sub(r"^(查询|查|list|status|ls)\s*", "", rest, flags=re.I).strip()
+    elif any(k in rest.lower() for k in ["qoder", "workbuddy", "codebuddy", "cline", "amd", "nvidia", "siliconflow"]):
+        # 容错：如果用户直接输入 "fm workbuddy" 或 "fm qoder国服"，自动归入查/探查动作
+        sub = rest.strip()
+    else:
+        sub = None
+
+    if sub is not None:
         # 处理自然语言别名匹配
         # 比如：qoder国服 -> qoder-cn, qoder国际服/国际 -> qoder
         # workbuddy国服 -> workbuddy-cn, workbuddy国际服/国际 -> workbuddy
